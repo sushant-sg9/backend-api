@@ -3,14 +3,14 @@ const User = require("../models/userModel");
 const generateToken = require("../Config/generateToken");
 
 const registerUser =  asyncHandler (async(req,res) => {
-    const { name, mobileCode, mobile, password} =req.body
+    const { name, mobileCode, mobile, city} =req.body
 
-    if(!name || !mobile || !password){
+    if(!name || !mobile || !city){
         res.status(400)
         throw new Error("Please Enter all the Feilds")
     }else if(!mobileCode){
         res.status(400)
-        throw new Error("Invalid Mobile Code")
+        throw new Error("Error In Mobile Code Not found")
     }
     const userExists = await User.findOne({
         $or: [
@@ -22,7 +22,7 @@ const registerUser =  asyncHandler (async(req,res) => {
         res.status(400);
         throw new Error("User already exists");
     }
-    const user = await User.create({name, mobileCode, mobile, password})
+    const user = await User.create({name, mobileCode, mobile, city})
     if(user){
         res.status(201).json({
             message: "Registration successful",
@@ -30,6 +30,7 @@ const registerUser =  asyncHandler (async(req,res) => {
             name: user.name,
             mobileCode: user.mobileCode,
             mobile: user.mobile,
+            city: user.city,
             token: generateToken(user._id),
         })
     }else{
