@@ -3,9 +3,9 @@ const User = require("../models/userModel");
 const generateToken = require("../Config/generateToken");
 
 const registerUser =  asyncHandler (async(req,res) => {
-    const { name, mobileCode, mobile, city} =req.body
+    const { name, mobileCode, mobile, city, email} =req.body
 
-    if(!name || !mobile || !city){
+    if(!name || !mobile || !city || !email){
         res.status(400)
         throw new Error("Please Enter all the Feilds")
     }else if(!mobileCode){
@@ -14,7 +14,8 @@ const registerUser =  asyncHandler (async(req,res) => {
     }
     const userExists = await User.findOne({
         $or: [
-            { mobile: req.body.mobile }
+            { mobile: req.body.mobile },
+            { email: req.body.email }
         ]
     });
     
@@ -50,6 +51,7 @@ const authUser = asyncHandler(async (req, res) => {
             name: user.name,
             mobile: user.mobile,
             city: user.city,
+            email: user.email,
             token: generateToken(user._id),
             otp: otp, 
         });
