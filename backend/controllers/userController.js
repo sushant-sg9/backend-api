@@ -31,6 +31,7 @@ const registerUser =  asyncHandler (async(req,res) => {
             name: user.name,
             mobileCode: user.mobileCode,
             mobile: user.mobile,
+            email: user.email,
             city: user.city,
             token: generateToken(user._id),
         })
