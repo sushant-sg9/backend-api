@@ -43,7 +43,7 @@ const authUser = asyncHandler(async (req, res) => {
     const { mobileCode, mobile } = req.body; 
     const user = await User.findOne({ mobile });
 
-    if (user && mobileCode === mobile) {
+    if (user && mobileCode === user.mobileCode) {
         const otp = Math.floor(1000 + Math.random() * 9000); 
         res.json({
             _id: user._id,
