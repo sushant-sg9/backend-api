@@ -40,22 +40,22 @@ const registerUser =  asyncHandler (async(req,res) => {
 })
 
 const authUser = asyncHandler(async (req, res) => {
-    const { mobile} = req.body;
+    const { mobileCode, mobile } = req.body; 
     const user = await User.findOne({ mobile });
 
-    if (user) {
+    if (user && mobileCode === mobile) {
         const otp = Math.floor(1000 + Math.random() * 9000); 
-
         res.json({
             _id: user._id,
             name: user.name,
             mobile: user.mobile,
+            city: user.city,
             token: generateToken(user._id),
             otp: otp, 
         });
     } else {
         res.status(401);
-        throw new Error("Invalid mobile");
+        throw new Error("Invalid mobile or country code"); 
     }
 });
 
