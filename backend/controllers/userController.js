@@ -39,7 +39,7 @@ const registerUser =  asyncHandler (async(req,res) => {
 })
 
 const authUser = asyncHandler(async (req, res) => {
-    const { mobile, password } = req.body;
+    const { mobile} = req.body;
     const user = await User.findOne({ mobile });
 
     if (user) {
