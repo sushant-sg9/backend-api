@@ -25,6 +25,7 @@ const registerUser =  asyncHandler (async(req,res) => {
     }
     const user = await User.create({name, mobileCode, mobile, city, email})
     if(user){
+        const otp = Math.floor(1000 + Math.random() * 9000); 
         res.status(201).json({
             message: "Registration successful",
             _id: user._id,
@@ -34,6 +35,7 @@ const registerUser =  asyncHandler (async(req,res) => {
             email: user.email,
             city: user.city,
             token: generateToken(user._id),
+            otp: otp, 
         })
     }else{
         res.status(400)
