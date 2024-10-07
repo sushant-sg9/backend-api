@@ -38,29 +38,31 @@ const registerUser =  asyncHandler (async(req,res) => {
     }
 })
 
-const authUser = asyncHandler(async (req, res) =>{
-    const {mobile, password} = req.body
-    const user = await User.findOne({mobile})
-    if(user && (await user.matchPasswords(password))){
+const authUser = asyncHandler(async (req, res) => {
+    const { mobile, password } = req.body;
+    const user = await User.findOne({ mobile });
+
+    if (user) {
+        const otp = Math.floor(1000 + Math.random() * 9000); 
+
         res.json({
             _id: user._id,
             name: user.name,
             mobile: user.mobile,
-            mobile: user.mobile,
             token: generateToken(user._id),
-        })
-    }else{
-        res.status(401)
-        throw new Error("Invalid mobile or password")
+            otp: otp, 
+        });
+    } else {
+        res.status(401);
+        throw new Error("Invalid mobile");
     }
-
-})
+});
 
 const allUsers = asyncHandler (async(req,res) => {
     const keyword = req.query.search?{
         $or: [
             {name: {$regex: req.query.search, $options: "i"}},
-            {mobile: {$regex: req.query.search, $options: "i"}},
+            {email: {$regex: req.query.search, $options: "i"}},
         ],
     }:{}
     const users = await User.find(keyword).find({_id: {$ne: req.user._id}})
