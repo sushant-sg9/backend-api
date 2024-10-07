@@ -2,6 +2,7 @@ const express = require("express");
 const dotenv = require("dotenv");
 const ConnectDB  = require("./Config/db");
 const userRoutes = require('./routes/userRoutes')
+const adminRoutes = require('./routes/adminRoutes');
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const cors = require("cors");
 
@@ -17,6 +18,7 @@ app.get("/", (req, res) => {
 })
 
 app.use('/api/user',userRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.use(notFound)
 app.use(errorHandler)
