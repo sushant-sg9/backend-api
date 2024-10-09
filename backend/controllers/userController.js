@@ -52,27 +52,6 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 })
 
-// const authUser = asyncHandler(async (req, res) => {
-//     const { mobileCode, mobile, loginType } = req.body;
-//     const user = await User.findOne({ mobile });
-
-//     if (user && mobileCode === user.mobileCode) {
-//         const otp = Math.floor(1000 + Math.random() * 9000);
-//         res.json({
-//             _id: user._id,
-//             name: user.name,
-//             mobile: user.mobile,
-//             city: user.city,
-//             email: user.email,
-//             token: generateToken(user._id),
-//             otp: otp,
-//         });
-//     } else {
-//         res.status(401);
-//         throw new Error("Invalid mobile or country code");
-//     }
-// });
-
 const authUser = asyncHandler(async (req, res) => {
     const { mobileCode, mobile, loginType, name, email, photoURL, uid } = req.body;
 
@@ -131,7 +110,7 @@ const authUser = asyncHandler(async (req, res) => {
     }
 });
 
-const allUsers = asyncHandler(async (req, res) => {
+const allUsersBySearch = asyncHandler(async (req, res) => {
     const keyword = req.query.search ? {
         $or: [
             { name: { $regex: req.query.search, $options: "i" } },
@@ -143,4 +122,44 @@ const allUsers = asyncHandler(async (req, res) => {
 
 })
 
-module.exports = { registerUser, authUser, allUsers }
+const getUserDetails = asyncHandler(async (req, res) => {
+    const { _id } = req.body;
+
+    if (!_id) {
+        res.status(400);
+        throw new Error('User ID is required');
+    }
+
+    try {
+        const user = await User.findById(_id)
+            .select('-__v'); 
+        if (!user) {
+            res.status(404);
+            throw new Error('User not found');
+        }
+
+        res.json({
+            success: true,
+            data: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                mobile: user.mobile,
+                mobileCode: user.mobileCode,
+                city: user.city,
+                loginType: user.loginType,
+                photoURL: user.photoURL,
+                uid: user.uid,
+                lastLogin: user.lastLogin,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt
+            }
+        });
+
+    } catch (error) {
+        res.status(res.statusCode === 200 ? 500 : res.statusCode);
+        throw new Error(error.message);
+    }
+});
+
+module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails }

@@ -1,9 +1,10 @@
 const express = require('express');
-const { adminLogin } = require('../controllers/adminController');
-const router = express.Router();
-const  {protect}  = require('../middleware/authController')
+const { adminLogin, getAllUsers } = require('../controllers/adminController');
+const  {adminProtect}  = require('../middleware/authController')
 
+const router = express.Router();
 
 router.route('/login').post(adminLogin);
+router.route('/getAllUser').get(adminProtect,getAllUsers);
 
 module.exports = router;

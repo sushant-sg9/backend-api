@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const generateToken = require("../Config/generateToken");
-const Admin = require("../models/adminModels"); 
+const Admin = require("../models/adminModels");
+const User  = require("../models/userModel"); 
 
 const adminLogin = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
@@ -14,20 +15,18 @@ const adminLogin = asyncHandler(async (req, res) => {
     }
 
     let admin = await Admin.findOne({ email: superAdminEmail });
-    console.log("Admin found:", admin);
 
     if (!admin) {
         admin = await Admin.create({
             email: superAdminEmail,
             password: superAdminPassword, 
         });
-        console.log("Admin created with email:", superAdminEmail);
     }
 
     if (admin && (await admin.matchPassword(password))) {
         res.json({
             email: admin.email,
-            token: generateToken(admin.email), 
+            token: generateToken(admin._id), 
             message: "Admin login successful",
         });
     } else {
@@ -36,4 +35,19 @@ const adminLogin = asyncHandler(async (req, res) => {
     }
 });
 
-module.exports = { adminLogin };
+const getAllUsers = asyncHandler(async (req, res) => {
+    try {
+        const users = await User.find({}).select('-password -__v');
+        res.status(200).json({
+            sucess: true,
+            message: "Users retrieved successfully",
+            count: users.length,
+            data: users
+        });
+    } catch (error) {
+        res.status(500);
+        throw new Error('Failed to retrieve users');
+    }
+});
+
+module.exports = { adminLogin, getAllUsers };
