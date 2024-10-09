@@ -74,12 +74,11 @@ const registerUser = asyncHandler(async (req, res) => {
 // });
 
 const authUser = asyncHandler(async (req, res) => {
-    const { mobileCode, mobile, loginType, name, email, photoURL,uid } = req.body;
+    const { mobileCode, mobile, loginType, name, email, photoURL, uid } = req.body;
 
     if (loginType && loginType === 'google') {
-        console.log("enter")
+
         let user = await User.findOne({ email });
-        console.log(user)
 
         if (!user) {
             user = await User.create({
@@ -90,7 +89,6 @@ const authUser = asyncHandler(async (req, res) => {
                 loginType,
                 lastLogin: new Date()
             });
-            console.log(user);
         } else {
             user.lastLogin = new Date();
             if (photoURL) user.photoURL = photoURL;
@@ -103,6 +101,7 @@ const authUser = asyncHandler(async (req, res) => {
             email: user.email,
             photoURL: user.photoURL,
             loginType: user.loginType,
+            uid: user.uid,
             token: generateToken(user._id)
         });
         
