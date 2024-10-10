@@ -3,14 +3,10 @@ const User = require("../models/userModel");
 const generateToken = require("../Config/generateToken");
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { name, mobileCode, mobile, city, email, loginType } = req.body
+    const { name, mobileCode, mobile, city, email } = req.body
 
-    if (!loginType) {
-        res.status(400)
-        throw new Error("Error In Login Type Not found")
-    }
+    const loginType = "normal"
 
-    if (loginType === "normal") {
         if (!name || !mobile || !city || !email) {
             res.status(400)
             throw new Error("Please Enter all the Feilds")
@@ -18,7 +14,6 @@ const registerUser = asyncHandler(async (req, res) => {
             res.status(400)
             throw new Error("Error In Mobile Code Not found")
         }
-    }
 
     const userExists = await User.findOne({
         $or: [
@@ -57,7 +52,7 @@ const authUser = asyncHandler(async (req, res) => {
 
     if (loginType && loginType === 'google') {
 
-        let user = await User.findOne({ email });
+    const user = await User.findOne({ email });
 
         if (!user) {
             user = await User.create({
@@ -162,4 +157,38 @@ const getUserDetails = asyncHandler(async (req, res) => {
     }
 });
 
-module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails }
+const deleteUserDetails = asyncHandler(async (req, res) => {
+    const { _id } = req.body;
+
+    if (!_id) {
+        res.status(400);
+        throw new Error('User ID is required');
+    }
+
+    try {
+        const user = await User.findById(_id);
+        
+        if (!user) {
+            res.status(404);
+            throw new Error('User not found');
+        }
+
+        await User.findByIdAndDelete(_id);
+
+        res.json({
+            success: true,
+            message: 'User deleted successfully',
+            data: {
+                _id: user._id,
+                name: user.name,
+                email: user.email
+            }
+        });
+
+    } catch (error) {
+        res.status(res.statusCode === 200 ? 500 : res.statusCode);
+        throw new Error(error.message);
+    }
+});
+
+module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails }
