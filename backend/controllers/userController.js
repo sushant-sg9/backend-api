@@ -191,4 +191,58 @@ const deleteUserDetails = asyncHandler(async (req, res) => {
     }
 });
 
-module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails }
+const addVideoLink = asyncHandler(async (req, res) => {
+    const { _id, videoLink } = req.body;
+
+    if (!_id || !videoLink) {
+        res.status(400);
+        throw new Error('User ID and video link are required');
+    }
+
+    try {
+        const user = await User.findById(_id);
+
+        if (!user) {
+            res.status(404);
+            throw new Error('User not found');
+        }
+
+        if (!user.videoLinks) {
+            user.videoLinks = [];
+        }
+
+        const existingLinkIndex = user.videoLinks.findIndex(
+            video => video.link === videoLink
+        );
+
+        if (existingLinkIndex !== -1) {
+            user.videoLinks[existingLinkIndex].count += 1;
+        } else {
+            user.videoLinks.push({
+                link: videoLink,
+                count: 1
+            });
+        }
+
+        const updatedUser = await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Video link added successfully',
+            data: {
+                _id: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                videoLinks: updatedUser.videoLinks
+            }
+        });
+
+    } catch (error) {
+        res.status(500);
+        throw new Error(error.message);
+    }
+});
+
+
+
+module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink }

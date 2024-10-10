@@ -28,7 +28,16 @@ const userSchema = mongoose.Schema({
     lastLogin: {
         type: Date,
         default: Date.now
-    }
+    },
+    videoLinks: [{
+        link: {
+            type: String,
+        },
+        count: {
+            type: Number,
+            default: 1
+        }
+    }]
 },
 {
     timestamps: true
