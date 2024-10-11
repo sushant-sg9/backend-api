@@ -191,6 +191,60 @@ const deleteUserDetails = asyncHandler(async (req, res) => {
     }
 });
 
+// const addVideoLink = asyncHandler(async (req, res) => {
+//     const { _id, videoLink } = req.body;
+
+//     if (!_id || !videoLink) {
+//         res.status(400);
+//         throw new Error('User ID and video link are required');
+//     }
+
+//     try {
+//         const user = await User.findById(_id);
+
+//         if (!user) {
+//             res.status(404);
+//             throw new Error('User not found');
+//         }
+
+//         if (!user.videoLinks) {
+//             user.videoLinks = [];
+//         }
+
+//         const existingLinkIndex = user.videoLinks.findIndex(
+//             video => video.link === videoLink
+//         );
+
+//         if (existingLinkIndex !== -1) {
+//             user.videoLinks[existingLinkIndex].count += 1;
+//             user.videoLinks[existingLinkIndex].date = new Date();
+//         } else {
+//             user.videoLinks.push({
+//                 link: videoLink,
+//                 count: 1,
+//                 date: new Date()
+//             });
+//         }
+
+//         const updatedUser = await user.save();
+
+//         res.status(200).json({
+//             success: true,
+//             message: 'Video link added successfully',
+//             data: {
+//                 _id: updatedUser._id,
+//                 name: updatedUser.name,
+//                 email: updatedUser.email,
+//                 videoLinks: updatedUser.videoLinks
+//             }
+//         });
+
+//     } catch (error) {
+//         res.status(500);
+//         throw new Error(error.message);
+//     }
+// });
+
 const addVideoLink = asyncHandler(async (req, res) => {
     const { _id, videoLink } = req.body;
 
@@ -206,6 +260,8 @@ const addVideoLink = asyncHandler(async (req, res) => {
             res.status(404);
             throw new Error('User not found');
         }
+
+        user.status = 'active';
 
         if (!user.videoLinks) {
             user.videoLinks = [];
@@ -228,6 +284,18 @@ const addVideoLink = asyncHandler(async (req, res) => {
 
         const updatedUser = await user.save();
 
+        setTimeout(async () => {
+            try {
+                const currentUser = await User.findById(_id);
+                if (currentUser) {
+                    currentUser.status = 'inactive';
+                    await currentUser.save();
+                }
+            } catch (error) {
+                console.error('Error updating user status:', error);
+            }
+        }, 60000); //300000
+
         res.status(200).json({
             success: true,
             message: 'Video link added successfully',
@@ -235,7 +303,8 @@ const addVideoLink = asyncHandler(async (req, res) => {
                 _id: updatedUser._id,
                 name: updatedUser.name,
                 email: updatedUser.email,
-                videoLinks: updatedUser.videoLinks
+                videoLinks: updatedUser.videoLinks,
+                status: updatedUser.status,
             }
         });
 
