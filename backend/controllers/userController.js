@@ -51,11 +51,10 @@ const authUser = asyncHandler(async (req, res) => {
     const { mobileCode, mobile, loginType, name, email, photoURL, uid } = req.body;
 
     if (loginType && loginType === 'google') {
-
-    const user = await User.findOne({ email });
+        const user = await User.findOne({ email });
 
         if (!user) {
-            user = await User.create({
+            const newUser = await User.create({
                 name,
                 uid,
                 email,
@@ -63,22 +62,34 @@ const authUser = asyncHandler(async (req, res) => {
                 loginType,
                 lastLogin: new Date()
             });
+
+            res.status(201).json({
+                message: 'User Login successfully',
+                _id: newUser._id,
+                name: newUser.name,
+                email: newUser.email,
+                photoURL: newUser.photoURL,
+                loginType: newUser.loginType,
+                uid: newUser.uid,
+                token: generateToken(newUser._id)
+            });
         } else {
+           
             user.lastLogin = new Date();
             if (photoURL) user.photoURL = photoURL;
             await user.save();
-        }
 
-        res.json({
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            photoURL: user.photoURL,
-            loginType: user.loginType,
-            uid: user.uid,
-            token: generateToken(user._id)
-        });
-        
+            res.status(200).json({
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                photoURL: user.photoURL,
+                loginType: user.loginType,
+                uid: user.uid,
+                token: generateToken(user._id),
+                message: "User already exists. Logged in successfully."
+            });
+        }
     } else {
         const user = await User.findOne({ mobile });
 
@@ -133,22 +144,11 @@ const getUserDetails = asyncHandler(async (req, res) => {
             throw new Error('User not found');
         }
 
+        const userObject = user.toObject();
+
         res.json({
             success: true,
-            data: {
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                mobile: user.mobile,
-                mobileCode: user.mobileCode,
-                city: user.city,
-                loginType: user.loginType,
-                photoURL: user.photoURL,
-                uid: user.uid,
-                lastLogin: user.lastLogin,
-                createdAt: user.createdAt,
-                updatedAt: user.updatedAt
-            }
+            data: userObject
         });
 
     } catch (error) {
@@ -358,6 +358,31 @@ const updateUserById = asyncHandler(async (req, res) => {
     }
 });
 
+const getVideoLinkDetails = asyncHandler(async (req, res) => {
+    const { _id } = req.body;
+
+    if (!_id) {
+        res.status(400);
+        throw new Error('User ID is required');
+    }
+
+    try {
+        const user = await User.findById(_id);
+        if (!user) {
+            res.status(404);
+            throw new Error('User not found');
+        }
+        res.status(200).json({  
+            success: true,
+            message: 'Video links fetched successfully',
+            data: user.videoLinks
+        });
+    } catch (error) {
+        res.status(res.statusCode === 200 ? 500 : res.statusCode);
+        throw new Error(error.message);
+    }
+
+});
 
 
-module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById }
+module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById, getVideoLinkDetails }
