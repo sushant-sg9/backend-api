@@ -217,10 +217,12 @@ const addVideoLink = asyncHandler(async (req, res) => {
 
         if (existingLinkIndex !== -1) {
             user.videoLinks[existingLinkIndex].count += 1;
+            user.videoLinks[existingLinkIndex].date = new Date();
         } else {
             user.videoLinks.push({
                 link: videoLink,
-                count: 1
+                count: 1,
+                date: new Date()
             });
         }
 
@@ -243,6 +245,119 @@ const addVideoLink = asyncHandler(async (req, res) => {
     }
 });
 
+const updateUserById = asyncHandler(async (req, res) => {
+    const { 
+        _id, 
+        name, 
+        email, 
+        dateOfBirth, 
+        gender, 
+        occupation, 
+        relationshipStatus, 
+        language, 
+        preferredContactMethod, 
+        favoriteDanceStyle, 
+        skillLevel, 
+        profileImage, 
+        country, 
+        state, 
+        city, 
+        mobile, 
+        mobileCode 
+    } = req.body;
+
+    if (!_id) {
+        res.status(400);
+        throw new Error('User ID is required');
+    }
+
+    try {
+        const user = await User.findById(_id);
+        
+        if (!user) {
+            res.status(404);
+            throw new Error('User not found');
+        }
+
+        if (email && email !== user.email) {
+            const emailExists = await User.findOne({ 
+                email, 
+                _id: { $ne: _id } 
+            });
+            
+            if (emailExists) {
+                res.status(400);
+                throw new Error('Email already in use use different email');
+            }
+        }
+
+        if (mobile && mobile !== user.mobile) {
+            const mobileExists = await User.findOne({ 
+                mobile, 
+                _id: { $ne: _id } 
+            });
+            
+            if (mobileExists) {
+                res.status(400);
+                throw new Error('Mobile number already in use different mobile');
+            }
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            _id,
+            {
+                $set: {
+                    name: name || user.name,
+                    email: email || user.email,
+                    dateOfBirth: dateOfBirth || user.dateOfBirth,
+                    gender: gender || user.gender,
+                    occupation: occupation || user.occupation,
+                    relationshipStatus: relationshipStatus || user.relationshipStatus,
+                    language: language || user.language,
+                    preferredContactMethod: preferredContactMethod || user.preferredContactMethod,
+                    favoriteDanceStyle: favoriteDanceStyle || user.favoriteDanceStyle,
+                    skillLevel: skillLevel || user.skillLevel,
+                    profileImage: profileImage || user.profileImage,
+                    country: country || user.country,
+                    state: state || user.state,
+                    city: city || user.city,
+                    mobile: mobile || user.mobile,
+                    mobileCode: mobileCode || user.mobileCode
+                }
+            },
+            { new: true, runValidators: true }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'User updated successfully',
+            data: {
+                _id: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                dateOfBirth: updatedUser.dateOfBirth,
+                gender: updatedUser.gender,
+                occupation: updatedUser.occupation,
+                relationshipStatus: updatedUser.relationshipStatus,
+                language: updatedUser.language,
+                preferredContactMethod: updatedUser.preferredContactMethod,
+                favoriteDanceStyle: updatedUser.favoriteDanceStyle,
+                skillLevel: updatedUser.skillLevel,
+                profileImage: updatedUser.profileImage,
+                country: updatedUser.country,
+                state: updatedUser.state,
+                city: updatedUser.city,
+                mobile: updatedUser.mobile,
+                mobileCode: updatedUser.mobileCode
+            }
+        });
+
+    } catch (error) {
+        res.status(res.statusCode === 200 ? 500 : res.statusCode);
+        throw new Error(error.message);
+    }
+});
 
 
-module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink }
+
+module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById }

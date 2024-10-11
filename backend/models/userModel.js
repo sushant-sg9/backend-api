@@ -13,6 +13,12 @@ const userSchema = mongoose.Schema({
     email: {
         type: String
     },
+    country: {
+        type: String
+    },
+    state: {
+        type: String
+    },
     city: {
         type: String
     },
@@ -23,6 +29,30 @@ const userSchema = mongoose.Schema({
         type: String
     },
     uid: {
+        type: String
+    },
+    dateOfBirth:{
+        type: Date
+    },
+    gender:{
+        type: String
+    },
+    relationshipStatus:{
+        type: String
+    },
+    language:{
+        type: String
+    },
+    preferredContactMethod:{
+        type: String
+    },
+    favoriteDanceStyle:{
+        type: String
+    },
+    skillLevel:{
+        type: String
+    },
+    profileImage:{
         type: String
     },
     lastLogin: {
@@ -36,6 +66,9 @@ const userSchema = mongoose.Schema({
         count: {
             type: Number,
             default: 1
+        },
+        date:{
+            type: Date,
         }
     }]
 },
