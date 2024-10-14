@@ -64,6 +64,10 @@ const userSchema = mongoose.Schema({
         type: Date,
         default: Date.now
     },
+    otp: {
+        type: String,
+        required: false,
+    },
     videoLinks: [{
         link: {
             type: String,

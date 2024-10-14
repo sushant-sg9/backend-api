@@ -405,23 +405,91 @@ const transporter = nodemailer.createTransport({
     port: 465,  
     secure: true,  
     auth: {
-        user: 'donotreply@hookstep.net',  // Your email
-        pass: 'Saasinsider@16',  // Your email password
+        user: 'donotreply@hookstep.net', 
+        pass: 'Saasinsider@16', 
     },
 });
 
+// const sendEmail = asyncHandler(async (req, res) => {
+//     const { id, to } = req.body;
+
+//     if (!id) {
+//         res.status(400);
+//         throw new Error('User ID is required');
+//     }
+
+//     try {
+//         const user = await User.findById(id);
+//         if (!user) {
+//             res.status(404);
+//             throw new Error('User not found');
+//         }
+
+//         const otp = Math.floor(1000 + Math.random() * 9000);
+
+//         user.otp = otp;
+     
+
+        // const emailHTML = `
+        //     <p>Hello ${user.name},</p>
+        //     <p>Your OTP for verification is: <strong>${otp}</strong></p>
+        //     <p>Thank you for using HookStep.</p>
+        // `;
+
+//         const mailOptions = {
+//             from: '"HookStep" <donotreply@hookstep.net>',
+//             to: to,
+//             subject: "Welcome to HookStep",
+//             text: "Thank you for joining us!",
+//             html: emailHTML,
+//         };
+
+//         transporter.sendMail(mailOptions, (error, info) => {
+//             if (error) {
+//                 console.error(`Error: ${error}`);
+//                 return res.status(500).json({
+//                     success: false,
+//                     message: 'Email failed to send',
+//                     error: error.toString(),
+//                 });
+//             }
+//             res.status(200).json({
+//                 success: true,
+//                 message: 'Email sent successfully with OTP',
+//                 info: info.response,
+//             });
+//         });
+//     } catch (error) {
+//         res.status(500);
+//         throw new Error(error.message);
+//     }
+// });
+
+
 const sendEmail = asyncHandler(async (req, res) => {
-    const { to, subject, text , html} = req.body;
+    const { id, to, subject, text } = req.body;
+
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+
+    const htmlContent = `
+       <p>Your OTP for verification is: <strong>${otp}</strong></p>
+       <p>Thank you for using HookStep.</p>
+    `;
 
     const mailOptions = {
         from: '"HookStep" <donotreply@hookstep.net>',
         to: to,
-        subject: subject,
-        text: text,
-        html: html,
+        subject: "Welcome to HookStep",
+        text: "Thank you for joining us!",
+        html: htmlContent,
     };
 
-    transporter.sendMail(mailOptions, (error, info) => {
+    if (!id) {
+        res.status(400);
+        throw new Error('User ID is required');
+    }
+
+    transporter.sendMail(mailOptions, async (error, info) => {
         if (error) {
             console.error(`Error: ${error}`);
             return res.status(500).json({
@@ -430,13 +498,64 @@ const sendEmail = asyncHandler(async (req, res) => {
                 error: error.toString(),
             });
         }
-        res.status(200).json({
-            success: true,
-            message: 'Email sent successfully',
-            info: info.response,
-        });
+
+        try {
+            const user = await User.findById(id);
+            if (!user) {
+                res.status(404);
+                throw new Error('User not found');
+            }
+
+            user.otp = otp;
+            await user.save();
+
+            res.status(200).json({
+                success: true,
+                message: 'Email sent successfully and OTP saved',
+                info: info.response,
+            });
+        } catch (err) {
+            res.status(500).json({
+                success: false,
+                message: 'Failed to save OTP to user',
+                error: err.toString(),
+            });
+        }
     });
 });
 
 
-module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById, getVideoLinkDetails, sendEmail };
+const verifyOtpEmail = asyncHandler(async (req, res) => {
+    const { id, otp } = req.body;
+
+    if (!id || !otp) {
+        res.status(400);
+        throw new Error('User ID and OTP are required');
+    }
+
+    try {
+        const user = await User.findById(id);
+        if (!user) {
+            res.status(404);
+            throw new Error('User not found');
+        }
+
+        if (user.otp === otp) {
+            res.status(200).json({
+                success: true,
+                message: 'OTP verified successfully',
+            });
+        } else {
+            res.status(400).json({
+                success: false,
+                message: 'Invalid OTP',
+            });
+        }
+    } catch (error) {
+        res.status(500);
+        throw new Error(error.message);
+    }
+});
+
+
+module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById, getVideoLinkDetails, sendEmail, verifyOtpEmail };
