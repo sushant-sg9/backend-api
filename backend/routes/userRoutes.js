@@ -1,5 +1,5 @@
 const express = require('express')
-const { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById, getVideoLinkDetails} = require('../controllers/userController')
+const { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById, getVideoLinkDetails, sendEmail} = require('../controllers/userController')
 const  {protect}  = require('../middleware/authController')
 const { route } = require('express/lib/application')
 
@@ -12,5 +12,6 @@ router.route('/deleteUser').post(protect,deleteUserDetails)
 router.route('/addVideoLink').post(protect,addVideoLink)
 router.route('/updateUserdeatils').post(protect,updateUserById)
 router.route('/getVideoLinkDetails').post(protect,getVideoLinkDetails)
+router.route('/sendEmail').post(protect,sendEmail)
 
 module.exports = router

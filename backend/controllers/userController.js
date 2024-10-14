@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const User = require("../models/userModel");
 const generateToken = require("../Config/generateToken");
+const nodemailer = require('nodemailer'); 
 
 const registerUser = asyncHandler(async (req, res) => {
     const { name, mobileCode, mobile, city, email } = req.body
@@ -190,60 +191,6 @@ const deleteUserDetails = asyncHandler(async (req, res) => {
         throw new Error(error.message);
     }
 });
-
-// const addVideoLink = asyncHandler(async (req, res) => {
-//     const { _id, videoLink } = req.body;
-
-//     if (!_id || !videoLink) {
-//         res.status(400);
-//         throw new Error('User ID and video link are required');
-//     }
-
-//     try {
-//         const user = await User.findById(_id);
-
-//         if (!user) {
-//             res.status(404);
-//             throw new Error('User not found');
-//         }
-
-//         if (!user.videoLinks) {
-//             user.videoLinks = [];
-//         }
-
-//         const existingLinkIndex = user.videoLinks.findIndex(
-//             video => video.link === videoLink
-//         );
-
-//         if (existingLinkIndex !== -1) {
-//             user.videoLinks[existingLinkIndex].count += 1;
-//             user.videoLinks[existingLinkIndex].date = new Date();
-//         } else {
-//             user.videoLinks.push({
-//                 link: videoLink,
-//                 count: 1,
-//                 date: new Date()
-//             });
-//         }
-
-//         const updatedUser = await user.save();
-
-//         res.status(200).json({
-//             success: true,
-//             message: 'Video link added successfully',
-//             data: {
-//                 _id: updatedUser._id,
-//                 name: updatedUser.name,
-//                 email: updatedUser.email,
-//                 videoLinks: updatedUser.videoLinks
-//             }
-//         });
-
-//     } catch (error) {
-//         res.status(500);
-//         throw new Error(error.message);
-//     }
-// });
 
 const addVideoLink = asyncHandler(async (req, res) => {
     const { _id, videoLink } = req.body;
@@ -453,5 +400,43 @@ const getVideoLinkDetails = asyncHandler(async (req, res) => {
 
 });
 
+const transporter = nodemailer.createTransport({
+    host: 'smtp.hostinger.com',  
+    port: 465,  
+    secure: true,  
+    auth: {
+        user: 'donotreply@hookstep.net',  // Your email
+        pass: 'Saasinsider@16',  // Your email password
+    },
+});
 
-module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById, getVideoLinkDetails }
+const sendEmail = asyncHandler(async (req, res) => {
+    const { to, subject, text , html} = req.body;
+
+    const mailOptions = {
+        from: '"HookStep" <donotreply@hookstep.net>',
+        to: to,
+        subject: subject,
+        text: text,
+        html: html,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.error(`Error: ${error}`);
+            return res.status(500).json({
+                success: false,
+                message: 'Email failed to send',
+                error: error.toString(),
+            });
+        }
+        res.status(200).json({
+            success: true,
+            message: 'Email sent successfully',
+            info: info.response,
+        });
+    });
+});
+
+
+module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById, getVideoLinkDetails, sendEmail };
