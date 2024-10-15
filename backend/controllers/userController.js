@@ -114,7 +114,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
 
 const authUser = asyncHandler(async (req, res) => {
-    const { loginType, name, email, photoURL, uid } = req.body;
+    const { mobileCode, mobile, loginType, name, email, photoURL, uid } = req.body;
 
     if (loginType && loginType === 'google') {
         const user = await User.findOne({ email });
@@ -130,7 +130,7 @@ const authUser = asyncHandler(async (req, res) => {
             });
 
             res.status(201).json({
-                message: 'User registered and logged in successfully',
+                message: 'User Login successfully',
                 _id: newUser._id,
                 name: newUser.name,
                 email: newUser.email,
@@ -140,6 +140,7 @@ const authUser = asyncHandler(async (req, res) => {
                 token: generateToken(newUser._id)
             });
         } else {
+           
             user.lastLogin = new Date();
             if (photoURL) user.photoURL = photoURL;
             await user.save();
@@ -154,6 +155,26 @@ const authUser = asyncHandler(async (req, res) => {
                 token: generateToken(user._id),
                 message: "User already exists. Logged in successfully."
             });
+        }
+    } else {
+        const user = await User.findOne({ mobile });
+
+        if (user && mobileCode === user.mobileCode) {            
+            user.lastLogin = new Date();
+            await user.save();
+
+            res.json({
+                _id: user._id,
+                name: user.name,
+                mobile: user.mobile,
+                city: user.city,
+                email: user.email,
+                loginType: user.loginType,
+                token: generateToken(user._id),
+            });
+        } else {
+            res.status(401);
+            throw new Error("Invalid mobile or country code");
         }
     }
 });
@@ -198,17 +219,9 @@ const verifyOTPLogin = asyncHandler(async (req, res) => {
 
     await OTP.deleteOne({ _id: otpRecord._id });
 
-    const user = await User.findOne({ mobile: phoneNumber });
-    user.lastLogin = new Date();
-    await user.save();
-
     res.json({
-        _id: user._id,
-        name: user.name,
-        mobile: user.mobile,
-        email: user.email,
-        token: generateToken(user._id),
-        message: 'Login successful',
+        success: true,
+        message: 'OTP verified successfully'
     });
 });
 
