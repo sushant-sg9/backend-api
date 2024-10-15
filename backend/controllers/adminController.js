@@ -116,4 +116,36 @@ const getUserById = asyncHandler(async (req, res) => {
     }
 });
 
-module.exports = { adminLogin, getAllUsers, getPopularity, getUserById };
+
+const changeAdminPassword = asyncHandler(async (req, res) => {
+    const { email, currentPassword, newPassword } = req.body;
+
+    const superAdminEmail = "superadmin@gmail.com";
+
+    if (email !== superAdminEmail) {
+        res.status(401);
+        throw new Error("Invalid email");
+    }
+
+    let admin = await Admin.findOne({ email: superAdminEmail });
+
+    if (!admin) {
+        res.status(404);
+        throw new Error("Admin not found");
+    }
+
+    const isMatch = await admin.matchPassword(currentPassword);
+    if (!isMatch) {
+        res.status(401);
+        throw new Error("Current password is incorrect");
+    }
+
+    admin.password = newPassword;
+    await admin.save();
+
+    res.json({
+        message: "Password changed successfully",
+    });
+});
+
+module.exports = { adminLogin, getAllUsers, getPopularity, getUserById, changeAdminPassword };

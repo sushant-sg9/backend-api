@@ -2,24 +2,31 @@ const asyncHandler = require("express-async-handler");
 const User = require("../models/userModel");
 const generateToken = require("../Config/generateToken");
 const nodemailer = require('nodemailer'); 
+const twilio = require('twilio');
 
-const registerUser = asyncHandler(async (req, res) => {
-    const { name, mobileCode, mobile, city, email } = req.body
 
-    const loginType = "normal"
+const accountSid = 'ACd09c38587b350042c0d673e9274aef8f';
+const authToken = '1a1c2e0933b07d5c4c65c3fc41b66f39';
+const client = new twilio(accountSid, authToken);
 
-        if (!name || !mobile || !city || !email) {
-            res.status(400)
-            throw new Error("Please Enter all the Feilds")
-        } else if (!mobileCode) {
-            res.status(400)
-            throw new Error("Error In Mobile Code Not found")
-        }
+
+const otpStore = {}; 
+
+const sendOTP = asyncHandler(async (req, res) => {
+    const { mobileCode, mobile, email } = req.body;
+
+    if (!mobile || !email) {
+        res.status(400);
+        throw new Error("Please enter all the fields");
+    } else if (!mobileCode) {
+        res.status(400);
+        throw new Error("Error in mobile code not found");
+    }
 
     const userExists = await User.findOne({
         $or: [
-            { mobile: req.body.mobile },
-            { email: req.body.email }
+            { mobile: mobile },
+            { email: email }
         ]
     });
 
@@ -27,9 +34,66 @@ const registerUser = asyncHandler(async (req, res) => {
         res.status(400);
         throw new Error("User already exists");
     }
-    const user = await User.create({ name, mobileCode, mobile, city, email, loginType })
+
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+
+    otpStore[`${mobileCode}${mobile}`] = { otp, expiresAt: Date.now() + 300000 }; 
+    const phoneNumber = `${mobileCode}${mobile}`;
+    client.messages.create({
+        body: `Your OTP for verification is: ${otp}`,
+        from: 'your_twilio_phone_number',
+        to: phoneNumber
+    })
+    .then(message => {
+        res.json({ message: "OTP sent successfully", phoneNumber });
+    })
+    .catch(error => {
+        console.error(`Twilio Error: ${error.message}`);
+        res.status(500).json({ error: 'Failed to send OTP via SMS', message: error.message });
+    });
+});
+
+
+
+
+const registerUser = asyncHandler(async (req, res) => {
+    const { name, mobileCode, mobile, city, email } = req.body;
+
+    const loginType = "normal";
+
+    if (!name || !mobile || !city || !email) {
+        res.status(400);
+        throw new Error("Please enter all the fields");
+    } else if (!mobileCode) {
+        res.status(400);
+        throw new Error("Error in mobile code not found");
+    }
+
+    const userExists = await User.findOne({
+        $or: [
+            { mobile: mobile },
+            { email: email }
+        ]
+    });
+
+    if (userExists) {
+        res.status(400);
+        throw new Error("User already exists");
+    }
+
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+
+    const user = await User.create({
+        name,
+        mobileCode,
+        mobile,
+        city,
+        email,
+        loginType,
+        otp
+    });
+
     if (user) {
-        const otp = Math.floor(1000 + Math.random() * 9000);
         res.status(201).json({
             message: "Registration successful",
             _id: user._id,
@@ -40,13 +104,14 @@ const registerUser = asyncHandler(async (req, res) => {
             city: user.city,
             loginType: user.loginType,
             token: generateToken(user._id),
-            otp: otp,
-        })
+        });
     } else {
-        res.status(400)
-        throw new Error("Failed to Create the User")
+        res.status(400);
+        throw new Error("Failed to create the user");
     }
-})
+});
+
+
 
 const authUser = asyncHandler(async (req, res) => {
     const { mobileCode, mobile, loginType, name, email, photoURL, uid } = req.body;
@@ -65,7 +130,7 @@ const authUser = asyncHandler(async (req, res) => {
             });
 
             res.status(201).json({
-                message: 'User Login successfully',
+                message: 'User registered and logged in successfully',
                 _id: newUser._id,
                 name: newUser.name,
                 email: newUser.email,
@@ -75,7 +140,6 @@ const authUser = asyncHandler(async (req, res) => {
                 token: generateToken(newUser._id)
             });
         } else {
-           
             user.lastLogin = new Date();
             if (photoURL) user.photoURL = photoURL;
             await user.save();
@@ -95,20 +159,37 @@ const authUser = asyncHandler(async (req, res) => {
         const user = await User.findOne({ mobile });
 
         if (user && mobileCode === user.mobileCode) {
-            const otp = Math.floor(1000 + Math.random() * 9000);
+            const otp = Math.floor(1000 + Math.random() * 9000).toString();
             
+            user.otp = otp;
             user.lastLogin = new Date();
             await user.save();
 
-            res.json({
-                _id: user._id,
-                name: user.name,
-                mobile: user.mobile,
-                city: user.city,
-                email: user.email,
-                loginType: user.loginType,
-                token: generateToken(user._id),
-                otp: otp,
+            const phoneNumber = `${mobileCode}${mobile}`;
+            client.messages.create({
+                body: `Your OTP for verification is: ${otp}`,
+                from: 'your_twilio_phone_number',
+                to: phoneNumber
+            }).then(message => {
+                console.log(`OTP sent successfully with SID: ${message.sid}`);
+                res.json({
+                    _id: user._id,
+                    name: user.name,
+                    mobile: user.mobile,
+                    city: user.city,
+                    email: user.email,
+                    loginType: user.loginType,
+                    token: generateToken(user._id),
+                    otp: user.otp, 
+                    message: "OTP sent successfully."
+                });
+            }).catch(error => {
+                console.error(`Twilio Error: ${error.message}`);
+                res.status(500).json({
+                    success: false,
+                    message: 'Failed to send OTP via SMS',
+                    error: error.message
+                });
             });
         } else {
             res.status(401);
@@ -116,6 +197,9 @@ const authUser = asyncHandler(async (req, res) => {
         }
     }
 });
+
+
+
 
 const allUsersBySearch = asyncHandler(async (req, res) => {
     const keyword = req.query.search ? {
