@@ -3,10 +3,11 @@ const User = require("../models/userModel");
 const generateToken = require("../Config/generateToken");
 const nodemailer = require('nodemailer'); 
 const twilio = require('twilio');
+require('dotenv').config();
 
 
-const accountSid = 'ACd09c38587b350042c0d673e9274aef8f';
-const authToken = '1a1c2e0933b07d5c4c65c3fc41b66f39';
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH;
 const client = new twilio(accountSid, authToken);
 
 
