@@ -30,7 +30,7 @@ const sendOTPSignup = asyncHandler(async (req, res) => {
 
     client.messages.create({
         body: `Your OTP for verification is: ${otp}`,
-        from: 'your_twilio_phone_number',
+        from: '+13323333614',
         to: phoneNumber
     })
     .then(message => {
@@ -175,7 +175,7 @@ const sendOTPLogin = asyncHandler(async (req, res) => {
 
     client.messages.create({
         body: `Your OTP for login is: ${otp}`,
-        from: 'your_twilio_phone_number',
+        from: '+13323333614',
         to: phoneNumber
     })
     .then(message => {
