@@ -56,8 +56,6 @@ const verifyOTPSignup = asyncHandler(async (req, res) => {
     }
 });
 
-
-
 const registerUser = asyncHandler(async (req, res) => {
     const { name, mobileCode, mobile, city, email } = req.body;
 
@@ -110,8 +108,6 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new Error("Failed to create the user");
     }
 });
-
-
 
 const authUser = asyncHandler(async (req, res) => {
     const { mobileCode, mobile, loginType, name, email, photoURL, uid } = req.body;
@@ -224,9 +220,6 @@ const verifyOTPLogin = asyncHandler(async (req, res) => {
         message: 'OTP verified successfully'
     });
 });
-
-
-
 
 
 
