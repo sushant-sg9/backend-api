@@ -93,6 +93,25 @@ const getPopularity = asyncHandler(async (req, res) => {
     }
 });
 
+const getMultipleUserInfo = asyncHandler(async (req, res) => {
+    try {
+        const userIds = req.params.userIds; 
+        if (!userIds) {
+          return res.status(400).json({ message: 'User IDs are required.' });
+        }
+    
+        const idsArray = userIds.split(',');
+    
+        const users = await User.find({ _id: { $in: idsArray } });
+        
+        return res.json(users);
+      } catch (error) {
+        console.error('Error fetching user information:', error);
+        return res.status(500).json({ message: 'Internal server error.' });
+      }
+    
+  });
+
 
 const getUserById = asyncHandler(async (req, res) => {
     try {
@@ -148,4 +167,4 @@ const changeAdminPassword = asyncHandler(async (req, res) => {
     });
 });
 
-module.exports = { adminLogin, getAllUsers, getPopularity, getUserById, changeAdminPassword };
+module.exports = { adminLogin, getAllUsers, getPopularity, getUserById, changeAdminPassword , getMultipleUserInfo};
