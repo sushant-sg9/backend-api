@@ -3,7 +3,7 @@ const User = require("../models/userModel");
 const generateToken = require("../Config/generateToken");
 const nodemailer = require('nodemailer'); 
 const twilio = require('twilio');
-const OTP = require('../models/OTP'); 
+const OTP = require('../models/otpModel'); 
 
 require('dotenv').config();
 
