@@ -11,13 +11,15 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH;
 const client = new twilio(accountSid, authToken);
 
+console.log(accountSid)
+
 
 
 const sendOTPSignup = asyncHandler(async (req, res) => {
     const { mobileCode, mobile } = req.body;
     const phoneNumber = `${mobileCode}${mobile}`;
 
-    const userExists = await User.findOne({ mobile: phoneNumber });
+    const userExists = await User.findOne({ mobile, mobileCode });
 
     if (userExists) {
         return res.status(400).json({ message: "Mobile number already registered" });
@@ -225,10 +227,13 @@ const verifyOTPLogin = asyncHandler(async (req, res) => {
     }
 
     await OTP.deleteOne({ _id: otpRecord._id });
+    const user = await User.findOne({ mobile });
+
 
     res.json({
         success: true,
-        message: 'OTP verified successfully'
+        message: 'OTP verified successfully',
+        token: generateToken(user._id),
     });
 }
 });
