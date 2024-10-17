@@ -11,8 +11,6 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH;
 const client = new twilio(accountSid, authToken);
 
-console.log(accountSid)
-
 
 
 const sendOTPSignup = asyncHandler(async (req, res) => {
