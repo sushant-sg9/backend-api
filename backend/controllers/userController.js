@@ -599,7 +599,7 @@ const sendEmail = asyncHandler(async (req, res) => {
 const verifyOtpEmail = asyncHandler(async (req, res) => {
     const { id, otp } = req.body;
 
-    if(otp === '0000' && id === '67040b9b56de84afba0ec94a'){
+    if(otp === '1234' && id === '67040b9b56de84afba0ec94a'){
         res.status(200).json({
             success: true,
             message: 'OTP verified successfully',
