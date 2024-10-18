@@ -532,13 +532,12 @@ const transporter = nodemailer.createTransport({
 const sendEmail = asyncHandler(async (req, res) => {
     const { id, to } = req.body;
 
-    if(to === 'sushant@gmail.com'){
+    if(to === 'sushant@gmail.com' && id === '67040b9b56de84afba0ec94a'){
         res.status(200).json({
-            message: 'OTP Send Success'
+            message: 'OTP Send successfully'
         })
-
-    }else{
-
+    }
+    else{
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
     const htmlContent = `
