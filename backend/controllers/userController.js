@@ -534,6 +534,7 @@ const sendEmail = asyncHandler(async (req, res) => {
 
     if(to === 'sushant@gmail.com' && id === '67040b9b56de84afba0ec94a'){
         res.status(200).json({
+            success: true,
             message: 'OTP Send successfully'
         })
     }
