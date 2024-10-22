@@ -188,7 +188,13 @@ const sendOTPLogin = asyncHandler(async (req, res) => {
             otp: "1234",
             message: "OTP sent successfully",
          });
-    }else{
+    }else if(phoneNumber === "+918989898989"){
+        res.json({ 
+            otp: "1234",
+            message: "OTP sent successfully",
+         });
+    }
+    else{
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
     await OTP.create({ mobile: phoneNumber, otp });
@@ -213,7 +219,7 @@ const verifyOTPLogin = asyncHandler(async (req, res) => {
     const { mobileCode, mobile, otp } = req.body;
     const phoneNumber = `${mobileCode}${mobile}`;
 
-    if(phoneNumber === "+919898989898" && otp === "1234"){
+    if((phoneNumber === "+919898989898" && otp === "1234") ||(phoneNumber === "+918989898989" && otp === "1234")){
         res.json({ 
             message: "Mobile number verified successfully"
         });
