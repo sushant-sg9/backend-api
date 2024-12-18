@@ -178,11 +178,7 @@ const sendOTPLogin = asyncHandler(async (req, res) => {
     const { mobileCode, mobile } = req.body;
     const phoneNumber = `${mobileCode}${mobile}`;
 
-    const userExists = await User.findOne({ mobile, mobileCode });
-
-    if (!userExists) {
-        return res.status(404).json({ message: "User not found" });
-    }
+    
     if(phoneNumber === "+919898989898"){
         res.json({ 
             otp: "1234",
@@ -195,12 +191,18 @@ const sendOTPLogin = asyncHandler(async (req, res) => {
          });
     }
     else{
+        const userExists = await User.findOne({ mobile, mobileCode });
+
+    if (!userExists) {
+        return res.status(404).json({ message: "User not found" });
+    }
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
     await OTP.create({ mobile: phoneNumber, otp });
 
     client.messages.create({
         body: `Your OTP for login is: ${otp}`,
+        // body: `hello, Message received Successfully`,
         from: '+13323333614',
         to: phoneNumber
     })
