@@ -10,29 +10,24 @@ const createMedia = asyncHandler(async (req, res) => {
         let result;
         
         if (isArray) {
-            // Validate each entry in the array
             mediaData.forEach(entry => {
                 if (!entry.videoUrl || !entry.imageUrl) {
                     throw new Error('Both videoUrl and imageUrl are required for each entry');
                 }
             });
             
-            // Transform the data to match the schema
             const formattedData = mediaData.map(entry => ({
                 videourl: entry.videoUrl,
                 imageurl: entry.imageUrl
             }));
             
-            // Insert many records
             result = await Media.insertMany(formattedData);
         } else {
-            // Single entry validation
             if (!mediaData.videoUrl || !mediaData.imageUrl) {
                 res.status(400);
                 throw new Error('Both videoUrl and imageUrl are required');
             }
             
-            // Create single record
             result = await Media.create({
                 videourl: mediaData.videoUrl,
                 imageurl: mediaData.imageUrl
@@ -54,7 +49,6 @@ const getAllMedia = asyncHandler(async (req, res) => {
     try {
         const media = await Media.find({});
         
-        // Transform the response to match the expected format
         const formattedMedia = media.map(item => ({
             videoUrl: item.videourl,
             imageUrl: item.imageurl
