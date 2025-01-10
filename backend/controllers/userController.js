@@ -540,9 +540,10 @@ const transporter = nodemailer.createTransport({
 const sendEmail = asyncHandler(async (req, res) => {
     const { id, to } = req.body;
 
-    if(to === 'sushant@gmail.com' && id === '67040b9b56de84afba0ec94a'){
+    if(to === 'testing@gmail.com'){
         res.status(200).json({
             success: true,
+            otp: '1234',
             message: 'OTP Send successfully'
         })
     }
@@ -596,7 +597,7 @@ const sendEmail = asyncHandler(async (req, res) => {
         } catch (err) {
             res.status(500).json({
                 success: false,
-                message: 'Failed to save OTP to user',
+                message: 'Failed to send OTP to user',
                 error: err.toString(),
             });
         }
@@ -607,7 +608,7 @@ const sendEmail = asyncHandler(async (req, res) => {
 const verifyOtpEmail = asyncHandler(async (req, res) => {
     const { id, otp } = req.body;
 
-    if(otp === '1234' && id === '67040b9b56de84afba0ec94a'){
+    if(otp === '1234'){
         res.status(200).json({
             success: true,
             message: 'OTP verified successfully',
