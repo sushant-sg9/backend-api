@@ -724,7 +724,7 @@ const processYouTube = async (url) => {
                          snippet.thumbnails.medium || 
                          snippet.thumbnails.default;
 
-        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0`;
+        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&modestbranding=1&rel=0&showinfo=0&fs=0`;
         const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
 
         return {
