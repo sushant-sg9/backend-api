@@ -18,7 +18,7 @@ router.route('/sendOTPSignup').post(sendOTPSignup)
 router.route('/verifyOTPSignup').post(verifyOTPSignup)
 router.route('/verifyOTPLogin').post(verifyOTPLogin)
 router.route('/sendOTPLogin').post(sendOTPLogin)
-router.route('/process_video').post(protect,processVideoLink)
+router.route('/process_video').post(processVideoLink)
 
 
 module.exports = router
