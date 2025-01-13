@@ -5,6 +5,11 @@ const nodemailer = require('nodemailer');
 const twilio = require('twilio');
 const OTP = require('../models/otpModel'); 
 require('dotenv').config();
+const { IgApiClient } = require('instagram-private-api');
+const axios = require('axios');
+// const youtubedl = require('youtube-dl-exec');
+// const { InstagramAPI } = require('instagram-private-api');
+// const FB = require('fb');
 
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -368,7 +373,7 @@ const addVideoLink = asyncHandler(async (req, res) => {
             } catch (error) {
                 console.error('Error updating user status:', error);
             }
-        }, 60000); //300000
+        }, 60000);
 
         res.status(200).json({
             success: true,
@@ -645,6 +650,235 @@ const verifyOtpEmail = asyncHandler(async (req, res) => {
 }
 });
 
+
+
+
+const ig = new IgApiClient();
+// FB.options({
+//     appId: process.env.FB_APP_ID,
+//     appSecret: process.env.FB_APP_SECRET,
+//     accessToken: process.env.FB_ACCESS_TOKEN
+// });
+
+function getVideoPlatform(url) {
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        return 'youtube';
+    } else if (url.includes('instagram.com')) {
+        return 'instagram';
+    } else if (url.includes('facebook.com')) {
+        return 'facebook';
+    }
+    return null;
+}
+
+const processYouTube = async (url) => {
+    try {
+        let videoId = '';
+        
+        if (url.includes('youtu.be')) {
+            videoId = url.split('youtu.be/')[1].split('?')[0];
+        }
+        else if (url.includes('youtube.com')) {
+            const urlParams = new URL(url);
+            if (url.includes('/watch')) {
+                videoId = urlParams.searchParams.get('v');
+            }
+            else if (url.includes('/shorts/')) {
+                videoId = url.split('/shorts/')[1].split('?')[0];
+            }
+            else if (url.includes('/embed/')) {
+                videoId = url.split('/embed/')[1].split('?')[0];
+            }
+        }
+
+        if (!videoId) {
+            throw new Error('Could not extract video ID from URL');
+        }
+
+        const API_KEY = process.env.API_KEY_YT;
+        if (!API_KEY) {
+            throw new Error('YouTube API key not configured');
+        }
+
+        const response = await axios.get('https://www.googleapis.com/youtube/v3/videos', {
+            params: {
+                part: 'snippet,contentDetails,statistics',
+                id: videoId,
+                key: API_KEY
+            }
+        });
+
+
+        if (!response.data.items || response.data.items.length === 0) {
+            throw new Error('Video not found or is private');
+        }
+
+        const videoData = response.data.items[0];
+        const snippet = videoData.snippet;
+        const statistics = videoData.statistics;
+
+        const duration = videoData.contentDetails.duration; 
+        
+        const thumbnail = snippet.thumbnails.maxres || 
+                         snippet.thumbnails.high || 
+                         snippet.thumbnails.medium || 
+                         snippet.thumbnails.default;
+
+        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0`;
+        const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
+        return {
+            platform: 'youtube',
+            videoId: videoId,
+            title: snippet.title,
+            description: snippet.description,
+            publishedAt: snippet.publishedAt,
+            channelId: snippet.channelId,
+            channelTitle: snippet.channelTitle,
+            thumbnail: thumbnail.url,
+            embedUrl: embedUrl,
+            watchUrl: watchUrl,
+            duration: duration,
+            statistics: {
+                viewCount: parseInt(statistics.viewCount) || 0,
+                likeCount: parseInt(statistics.likeCount) || 0,
+                commentCount: parseInt(statistics.commentCount) || 0
+            },
+            tags: snippet.tags || [],
+            category: snippet.categoryId,
+            originalUrl: url
+        };
+
+    } catch (error) {
+        if (error.response) {
+            const errorMessage = error.response.data.error?.message || error.response.data;
+            
+            if (error.response.status === 403) {
+                throw new Error(`YouTube API quota exceeded or invalid API key: ${errorMessage}`);
+            } else if (error.response.status === 404) {
+                throw new Error('Video not found');
+            } else {
+                throw new Error(`YouTube API error: ${errorMessage}`);
+            }
+        }
+        console.error('Full error:', error);
+        throw new Error(`Failed to process YouTube URL: ${error.message}`);
+    }
+};
+
+const processInstagram = async (url) => {
+    try {
+        let postId = '';
+        if (url.includes('/reel/')) {
+            postId = url.split('/reel/')[1].split('/')[0];
+        } else if (url.includes('/p/')) {
+            postId = url.split('/p/')[1].split('/')[0];
+        }
+
+        if (!postId) {
+            throw new Error('Could not extract Instagram post ID from URL');
+        }
+
+        const ACCESS_TOKEN = process.env.INSTAGRAM_ACCESS_TOKEN;
+        if (!ACCESS_TOKEN) {
+            throw new Error('Instagram access token not found');
+        }
+
+        const response = await axios.get(`https://graph.instagram.com/${postId}`, {
+            params: {
+                fields: 'id,caption,media_type,media_url,thumbnail_url,permalink',
+                access_token: ACCESS_TOKEN
+            }
+        });
+
+        const mediaData = response.data;
+
+        return {
+            platform: 'instagram',
+            title: mediaData.caption || 'Instagram Video',
+            mediaType: mediaData.media_type,
+            videoUrl: mediaData.media_url,
+            thumbnail: mediaData.thumbnail_url || mediaData.media_url,
+            permalink: mediaData.permalink,
+            postId: postId
+        };
+
+    } catch (error) {
+        console.error('Full error details:', error.response?.data || error);
+        
+        if (error.response?.data?.error?.message) {
+            throw new Error(`Instagram API Error: ${error.response.data.error.message}`);
+        }
+        throw new Error(`Failed to process Instagram URL: ${error.message}`);
+    }
+};
+
+// Facebook video processor
+// async function processFacebook(url) {
+//     try {
+//         const videoId = url.match(/videos\/(\d+)/)?.[1];
+//         if (!videoId) throw new Error('Invalid Facebook video URL');
+
+//         const videoData = await new Promise((resolve, reject) => {
+//             FB.api(
+//                 `/${videoId}`,
+//                 'GET',
+//                 { fields: 'source,title,description,thumbnail,length' },
+//                 (response) => {
+//                     if (!response || response.error) {
+//                         reject(new Error(response?.error?.message || 'Facebook API error'));
+//                     }
+//                     resolve(response);
+//                 }
+//             );
+//         });
+
+//         return {
+//             platform: 'facebook',
+//             title: videoData.title,
+//             description: videoData.description,
+//             thumbnail: videoData.thumbnail,
+//             duration: videoData.length,
+//             playableUrl: videoData.source
+//         };
+//     } catch (error) {
+//         throw new Error(`Facebook processing error: ${error.message}`);
+//     }
+// }
+
+
+
+const processVideoLink = asyncHandler(async (req, res) => {
+    try {
+        const { url } = req.body;
+        if (!url) {
+            return res.status(400).json({ error: 'URL is required' });
+        }
+
+        const platform = getVideoPlatform(url);
+        if (!platform) {
+            return res.status(400).json({ error: 'Unsupported platform' });
+        }
+
+        let videoData;
+        switch (platform) {
+            case 'youtube':
+                videoData = await processYouTube(url);
+                break;
+            case 'instagram':
+                videoData = await processInstagram(url);
+                break;
+            case 'facebook':
+                videoData = await processFacebook(url);
+                break;
+        }
+
+        res.json(videoData);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}); 
+
 module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById, getVideoLinkDetails, sendEmail, verifyOtpEmail,
-    sendOTPSignup, verifyOTPSignup, sendOTPLogin, verifyOTPLogin
+    sendOTPSignup, verifyOTPSignup, sendOTPLogin, verifyOTPLogin, processVideoLink
  };
