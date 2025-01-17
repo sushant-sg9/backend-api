@@ -16,48 +16,100 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH;
 const client = new twilio(accountSid, authToken);
 
-
+const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    secure: true, 
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+    },
+    debug: true,
+    logger: true 
+});
 
 const sendOTPSignup = asyncHandler(async (req, res) => {
-    const { mobileCode, mobile } = req.body;
-    const phoneNumber = `${mobileCode}${mobile}`;
+    const { email } = req.body;
 
-    const userExists = await User.findOne({ mobile, mobileCode });
-
+    const userExists = await User.findOne({ email });
     if (userExists) {
-        return res.status(400).json({ message: "Mobile number already registered" });
+        return res.status(400).json({ message: "Email already registered" });
     }
 
-    const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
-    await OTP.create({ mobile: phoneNumber, otp });
+    try {
+        const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
-    client.messages.create({
-        body: `Your OTP for verification is: ${otp}`,
-        from: '+13323333614',
-        to: phoneNumber
-    })
-    .then(message => {
-        res.json({ message: "OTP sent successfully", phoneNumber });
-    })
-    .catch(error => {
-        console.error(`Twilio Error: ${error.message}`);
-        res.status(500).json({ error: 'Failed to send OTP via SMS', message: error.message });
-    });
+        const newUser = await User.create({
+            email,
+            status: 'inactive',
+            otp: otp
+        });
+        const htmlContent = `
+             <p>Welcome to HookStep!</p>
+            <p>Your account has been created successfully.</p>
+            <p>Please verify your email using this OTP: <strong>${otp}</strong></p>
+            <p>This OTP will expire in 10 minutes.</p>
+            <p>Thank you for joining HookStep!</p>
+        `;
+
+        const mailOptions = {
+            from: '"HookStep" <donotreply1@hookstep.net>',
+            to: email,
+            subject: "Welcome to HookStep - Verify Your Email",
+            text: `Your OTP for verification is: ${otp}`,
+            html: htmlContent,
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+
+        res.status(200).json({
+            success: true,
+            message: 'Account created successfully. Please check your email for OTP verification.',
+            info: info.response,
+            user: {
+                _id: newUser._id,
+                email: newUser.email,
+            }
+        });
+
+    } catch (error) {
+        await User.deleteOne({ email });
+        await OTP.deleteOne({ email });
+        
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create account',
+            error: error.toString()
+        });
+    }
 });
 
 const verifyOTPSignup = asyncHandler(async (req, res) => {
-    const { mobileCode, mobile, otp } = req.body;
-    const phoneNumber = `${mobileCode}${mobile}`;
+    const { email, otp } = req.body;
 
-    const otpRecord = await OTP.findOne({ mobile: phoneNumber, otp });
+    const user = await User.findOne({ email: email });
 
-    if (!otpRecord) {
-        res.status(401).json({ message: 'Invalid OTP or mobile number' });
-    } else {
-        await OTP.deleteOne({ _id: otpRecord._id });
-        res.json({ message: 'Mobile number verified successfully' });
+    if (!user) {
+        return res.status(401).json({ message: 'User not found' });
     }
+
+    if (user.otp !== otp) {
+        return res.status(401).json({ message: 'Invalid OTP' });
+    }
+
+    user.otp = undefined;
+    await user.save();
+
+    res.json({
+        success: true,
+        message: 'OTP verified successfully',
+        user: {
+            _id: user._id,
+            email: user.email
+        },
+        token: generateToken(user._id),
+    });
 });
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -180,73 +232,120 @@ const authUser = asyncHandler(async (req, res) => {
 });
 
 const sendOTPLogin = asyncHandler(async (req, res) => {
-    const { mobileCode, mobile } = req.body;
-    const phoneNumber = `${mobileCode}${mobile}`;
-
+    // const { mobileCode, mobile } = req.body;
+    const { email } = req.body;
+    // const phoneNumber = `${mobileCode}${mobile}`
+    console.log(email)
     
-    if(phoneNumber === "+919898989898"){
+    if(email === "testing@gmail.com"){
         res.json({ 
             otp: "1234",
             message: "OTP sent successfully",
-         });
-    }else if(phoneNumber === "+918989898989"){
-        res.json({ 
-            otp: "1234",
-            message: "OTP sent successfully",
-         });
+    });
     }
     else{
-        const userExists = await User.findOne({ mobile, mobileCode });
+        const userExists = await User.findOne({ email });
 
     if (!userExists) {
         return res.status(404).json({ message: "User not found" });
     }
-    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    // const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
-    await OTP.create({ mobile: phoneNumber, otp });
+    // await OTP.create({ mobile: phoneNumber, otp });
 
-    client.messages.create({
-        body: `Your OTP for login is: ${otp}`,
-        // body: `hello, Message received Successfully`,
-        from: '+13323333614',
-        to: phoneNumber
-    })
-    .then(message => {
-        res.json({ message: "OTP sent successfully", phoneNumber });
-    })
+    // client.messages.create({
+    //     body: `Your OTP for login is: ${otp}`,
+    //     // body: `hello, Message received Successfully`,
+    //     from: '+13323333614',
+    //     to: phoneNumber
+    // })
+    // .then(message => {
+    //     res.json({ message: "OTP sent successfully", email });
+    // })
 
-    .catch(error => {
-        console.error(`Twilio Error: ${error.message}`);
-        res.status(500).json({ error: 'Failed to send OTP via SMS', message: error.message });
-    });
+    // .catch(error => {
+    //     console.error(`Twilio Error: ${error.message}`);
+    //     res.status(500).json({ error: 'Failed to send OTP via SMS', message: error.message });
+    // });
+    else{
+        const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    
+        const htmlContent = `
+           <p>Your OTP for verification is: <strong>${otp}</strong></p>
+           <p>Thank you for using HookStep.</p>
+        `;
+    
+        const mailOptions = {
+            from: '"HookStep" <donotreply1@hookstep.net>',
+            to: email,
+            subject: "Welcome to HookStep",
+            text: "Thank you for joining us!",
+            html: htmlContent,
+        };
+    
+        transporter.sendMail(mailOptions, async (error, info) => {
+            if (error) {
+                console.error(`Error: ${error}`);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Email failed to send',
+                    error: error.toString(),
+                });
+            }
+    
+            try {
+                const user = await User.findOne({ email: email });
+                if (!user) {
+                    res.status(404);
+                    throw new Error('User not found');
+                }
+    
+                user.otp = otp;
+                await user.save();
+    
+                res.status(200).json({
+                    success: true,
+                    message: 'Email sent successfully',
+                    // otp: user.otp,
+                    info: info.response
+                });
+            } catch (err) {
+                res.status(500).json({
+                    success: false,
+                    message: 'Failed to send OTP to user',
+                    error: err.toString(),
+                });
+            }
+        });
+    }
     }
 });
 
 const verifyOTPLogin = asyncHandler(async (req, res) => {
-    const { mobileCode, mobile, otp } = req.body;
-    const phoneNumber = `${mobileCode}${mobile}`;
+    const { email, otp } = req.body;
 
-    if((phoneNumber === "+919898989898" && otp === "1234") ||(phoneNumber === "+918989898989" && otp === "1234")){
-        res.json({ 
-            message: "Mobile number verified successfully"
-        });
-    }else{
-    const otpRecord = await OTP.findOne({ mobile: phoneNumber, otp });
+    const user = await User.findOne({ email: email });
 
-    if (!otpRecord) {
-        return res.status(401).json({ message: 'Invalid OTP or mobile number' });
+    if (!user) {
+        return res.status(401).json({ message: 'User not found' });
     }
 
-    await OTP.deleteOne({ _id: otpRecord._id });
-    const user = await User.findOne({ mobile });
+    if (user.otp !== otp) {
+        return res.status(401).json({ message: 'Invalid OTP' });
+    }
 
+    user.otp = undefined;
+    await user.save();
 
     res.json({
         success: true,
         message: 'OTP verified successfully',
+        user: {
+            _id: user._id,
+            email: user.email
+        },
         token: generateToken(user._id),
     });
-}
 });
 
 const allUsersBySearch = asyncHandler(async (req, res) => {
@@ -531,16 +630,7 @@ const getVideoLinkDetails = asyncHandler(async (req, res) => {
     }
 
 });
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    secure: true, 
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
-    debug: true,
-});
+
 
 const sendEmail = asyncHandler(async (req, res) => {
     const { id, to } = req.body;
@@ -774,7 +864,7 @@ const processInstagram = async (url) => {
         } else if (url.includes('/p/')) {
             postId = url.split('/p/')[1].split('/')[0];
         }
-
+        
         if (!postId) {
             throw new Error('Could not extract Instagram post ID from URL');
         }
