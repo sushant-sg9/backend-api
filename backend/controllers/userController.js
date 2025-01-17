@@ -124,11 +124,7 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new Error("Error in mobile code not found");
     }
 
-    const userExists = await User.findOne({
-        $or: [
-            { mobile: mobile }
-        ]
-    });
+    const userExists = await User.findOne({ mobile: mobile });
 
     if (userExists) {
         res.status(400);
