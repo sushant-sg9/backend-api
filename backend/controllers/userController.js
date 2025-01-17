@@ -126,8 +126,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const userExists = await User.findOne({
         $or: [
-            { mobile: mobile },
-            { email: email }
+            { mobile: mobile }
         ]
     });
 
