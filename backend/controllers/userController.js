@@ -317,7 +317,7 @@ const sendOTPLogin = asyncHandler(async (req, res) => {
 const verifyOTPLogin = asyncHandler(async (req, res) => {
     const { email, otp } = req.body;
 
-    if(email === "testing@gmail.com") {
+    if(email === "testing@gmail.com" && otp === "1234") {
         res.json({
             success: true,
             message: 'OTP verified successfully',
