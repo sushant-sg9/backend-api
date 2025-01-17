@@ -49,7 +49,6 @@ const sendOTPSignup = asyncHandler(async (req, res) => {
              <p>Welcome to HookStep!</p>
             <p>Your account has been created successfully.</p>
             <p>Please verify your email using this OTP: <strong>${otp}</strong></p>
-            <p>This OTP will expire in 10 minutes.</p>
             <p>Thank you for joining HookStep!</p>
         `;
 
@@ -65,7 +64,7 @@ const sendOTPSignup = asyncHandler(async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: 'Account created successfully. Please check your email for OTP verification.',
+            message: 'OTP sent successfully On your Mail',
             info: info.response,
             user: {
                 _id: newUser._id,
