@@ -112,11 +112,11 @@ const verifyOTPSignup = asyncHandler(async (req, res) => {
 });
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { name, mobileCode, mobile, city, email } = req.body;
+    const { name, mobileCode, mobile, city } = req.body;
 
     const loginType = "normal";
 
-    if (!name || !mobile || !city || !email) {
+    if (!name || !mobile || !city) {
         res.status(400);
         throw new Error("Please enter all the fields");
     } else if (!mobileCode) {
@@ -137,7 +137,6 @@ const registerUser = asyncHandler(async (req, res) => {
         mobileCode,
         mobile,
         city,
-        email,
         loginType,
     });
 
