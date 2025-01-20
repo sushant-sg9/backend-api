@@ -27,7 +27,6 @@ const transporter = nodemailer.createTransport({
     debug: true,
     logger: true 
 });
-
 const sendOTPSignup = asyncHandler(async (req, res) => {
     const { email } = req.body;
 
@@ -36,20 +35,22 @@ const sendOTPSignup = asyncHandler(async (req, res) => {
         return res.status(400).json({ message: "Email already registered" });
     }
 
-
     try {
+        // Generate OTP
         const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
-        const newUser = await User.create({
-            email,
-            status: 'inactive',
-            otp: otp
-        });
+        // Store OTP in separate collection with TTL
+        await OTP.findOneAndUpdate(
+            { email },
+            { email, otp },
+            { upsert: true, new: true }
+        );
+
         const htmlContent = `
-             <p>Welcome to HookStep!</p>
-            <p>Your account has been created successfully.</p>
+            <p>Welcome to HookStep!</p>
             <p>Please verify your email using this OTP: <strong>${otp}</strong></p>
-            <p>Thank you for joining HookStep!</p>
+            <p>This OTP will expire in 5 minutes.</p>
+            <p>Thank you for choosing HookStep!</p>
         `;
 
         const mailOptions = {
@@ -64,51 +65,65 @@ const sendOTPSignup = asyncHandler(async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: 'OTP sent successfully On your Mail',
-            info: info.response,
-            user: {
-                _id: newUser._id,
-                email: newUser.email,
-            }
+            message: 'OTP sent successfully to your email',
+            info: info.response
         });
 
     } catch (error) {
-        await User.deleteOne({ email });
         await OTP.deleteOne({ email });
         
         res.status(500).json({
             success: false,
-            message: 'Failed to create account',
+            message: 'Failed to send OTP',
             error: error.toString()
         });
     }
 });
 
 const verifyOTPSignup = asyncHandler(async (req, res) => {
-    const { email, otp } = req.body;
+    const { email, otp } = req.body; 
 
-    const user = await User.findOne({ email: email });
+    try {
+        const otpDoc = await OTP.findOne({ email });
+        
+        if (!otpDoc) {
+            return res.status(401).json({ 
+                success: false,
+                message: 'OTP expired. Please request a new OTP.' 
+            });
+        }
 
-    if (!user) {
-        return res.status(401).json({ message: 'User not found' });
+        if (otpDoc.otp !== otp) {
+            return res.status(401).json({ 
+                success: false,
+                message: 'Invalid OTP' 
+            });
+        }
+
+        const newUser = await User.create({
+            email,
+            status: 'active'
+        });
+
+        await OTP.deleteOne({ email });
+
+        res.status(201).json({
+            success: true,
+            message: 'Account created successfully',
+            user: {
+                _id: newUser._id,
+                email: newUser.email
+            },
+            token: generateToken(newUser._id)
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to verify OTP and create account',
+            error: error.toString()
+        });
     }
-
-    if (user.otp !== otp) {
-        return res.status(401).json({ message: 'Invalid OTP' });
-    }
-
-    user.otp = undefined;
-    await user.save();
-
-    res.json({
-        success: true,
-        message: 'OTP verified successfully',
-        user: {
-            _id: user._id,
-            email: user.email
-        },
-        token: generateToken(user._id),
-    });
 });
 
 const registerUser = asyncHandler(async (req, res) => {
