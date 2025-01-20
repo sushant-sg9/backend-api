@@ -152,9 +152,8 @@ const registerUser = asyncHandler(async (req, res) => {
 
 
     const user = await User.findOneAndUpdate(
-        { emailUpdate }, 
+        { email: emailUpdate },
         { name, mobileCode, mobile, city, loginType }, 
-        { new: true, upsert: true, setDefaultsOnInsert: true } 
     );
 
     if (user) {
