@@ -27,6 +27,9 @@ const transporter = nodemailer.createTransport({
     debug: true,
     logger: true 
 });
+
+
+var emailUpdate;
 const sendOTPSignup = asyncHandler(async (req, res) => {
     const { email } = req.body;
 
@@ -36,10 +39,8 @@ const sendOTPSignup = asyncHandler(async (req, res) => {
     }
 
     try {
-        // Generate OTP
         const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
-        // Store OTP in separate collection with TTL
         await OTP.findOneAndUpdate(
             { email },
             { email, otp },
@@ -117,6 +118,9 @@ const verifyOTPSignup = asyncHandler(async (req, res) => {
             token: generateToken(newUser._id)
         });
 
+        emailUpdate = email;
+        
+
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -147,13 +151,11 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
 
-    const user = await User.create({
-        name,
-        mobileCode,
-        mobile,
-        city,
-        loginType,
-    });
+    const user = await User.findOneAndUpdate(
+        { emailUpdate }, 
+        { name, mobileCode, mobile, city, loginType }, 
+        { new: true, upsert: true, setDefaultsOnInsert: true } 
+    );
 
     if (user) {
         res.status(201).json({
