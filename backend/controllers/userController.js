@@ -29,7 +29,139 @@ const transporter = nodemailer.createTransport({
 });
 
 
-var emailUpdate;
+// var emailUpdate;
+
+
+const newSignup = asyncHandler(async (req, res) => {
+    const { email, mobileCode, mobile } = req.body;
+
+    if (!email || !mobileCode || !mobile) {
+        return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const userExistsWithMobile = await User.findOne({ mobile });
+    if (userExistsWithMobile) {
+        return res.status(400).json({ message: "Mobile number already registered" });
+    }
+
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+        return res.status(400).json({ message: "Email already registered" });
+    }
+
+    try {
+        const otp = Math.floor(1000 + Math.random() * 9000).toString();
+
+        await OTP.findOneAndUpdate(
+            { email },
+            { email, otp },
+            { upsert: true, new: true }
+        );
+
+        const htmlContent = `
+            <p>Welcome to HookStep!</p>
+            <p>Please verify your email using this OTP: <strong>${otp}</strong></p>
+            <p>This OTP will expire in 5 minutes.</p>
+            <p>Thank you for choosing HookStep!</p>
+        `;
+
+        const mailOptions = {
+            from: '"HookStep" <donotreply1@hookstep.net>',
+            to: email,
+            subject: "Welcome to HookStep - Verify Your Email",
+            text: `Your OTP for verification is: ${otp}`,
+            html: htmlContent,
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+
+        res.status(200).json({
+            success: true,
+            message: 'OTP sent successfully to your email',
+            info: info.response
+        });
+
+    } catch (error) {
+        await OTP.deleteOne({ email });
+        
+        res.status(500).json({
+            success: false,
+            message: 'Failed to send OTP',
+            error: error.toString()
+        });
+    }
+});
+
+
+const newSignupVerify = asyncHandler(async (req, res) => {
+    const { email, otp, password, mobile, mobileCode, name } = req.body; 
+
+    if (!email || !otp || !password || !mobile || !mobileCode || !name) {
+        return res.status(400).json({
+            success: false,
+            message: "All fields are required: email, otp, password, mobile, mobileCode, and name"
+        });
+    }
+
+    try {
+        const otpDoc = await OTP.findOne({ email });
+        
+        if (!otpDoc) {
+            return res.status(401).json({ 
+                success: false,
+                message: 'OTP expired. Please request a new OTP.' 
+            });
+        }
+
+        if (otpDoc.otp !== otp) {
+            return res.status(401).json({ 
+                success: false,
+                message: 'Invalid OTP' 
+            });
+        }
+
+        const newUser = await User.create({
+            email,
+            password, 
+            mobile,
+            mobileCode,
+            name,
+            status: 'active',
+            loginType: 'normal', 
+            lastLogin: new Date(),
+            videoLinks: [] 
+        });
+
+        
+        await OTP.deleteOne({ email });
+
+        
+        const userResponse = {
+            _id: newUser._id,
+            email: newUser.email,
+            name: newUser.name,
+            mobile: newUser.mobile,
+            mobileCode: newUser.mobileCode,
+            status: newUser.status,
+            loginType: newUser.loginType
+        };
+
+        res.status(201).json({
+            success: true,
+            message: 'Account created successfully',
+            user: userResponse,
+            token: generateToken(newUser._id)
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to verify OTP and create account',
+            error: error.toString()
+        });
+    }
+});
+
 const sendOTPSignup = asyncHandler(async (req, res) => {
     const { email } = req.body;
 
@@ -986,5 +1118,5 @@ const processVideoLink = asyncHandler(async (req, res) => {
 }); 
 
 module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById, getVideoLinkDetails, sendEmail, verifyOtpEmail,
-    sendOTPSignup, verifyOTPSignup, sendOTPLogin, verifyOTPLogin, processVideoLink
+    sendOTPSignup, verifyOTPSignup, sendOTPLogin, verifyOTPLogin, processVideoLink, newSignup, newSignupVerify
  };
