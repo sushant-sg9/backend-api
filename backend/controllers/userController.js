@@ -162,6 +162,66 @@ const newSignupVerify = asyncHandler(async (req, res) => {
     }
 });
 
+const newLogin = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({
+            success: false,
+            message: "Please provide both email and password"
+        });
+    }
+
+    try {
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email"
+            });
+        }
+
+        const isPasswordMatch = await user.matchPasswords(password);
+
+        if (!isPasswordMatch) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid password"
+            });
+        }
+
+        user.lastLogin = new Date();
+        await user.save();
+
+        const userResponse = {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            mobile: user.mobile,
+            mobileCode: user.mobileCode,
+            status: user.status,
+            loginType: user.loginType,
+            profileImage: user.profileImage,
+            lastLogin: user.lastLogin
+        };
+
+        res.status(200).json({
+            success: true,
+            message: "Login successful",
+            user: userResponse,
+            token: generateToken(user._id)
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Login failed",
+            error: error.toString()
+        });
+    }
+});
+
 const sendOTPSignup = asyncHandler(async (req, res) => {
     const { email } = req.body;
 
@@ -1118,5 +1178,5 @@ const processVideoLink = asyncHandler(async (req, res) => {
 }); 
 
 module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById, getVideoLinkDetails, sendEmail, verifyOtpEmail,
-    sendOTPSignup, verifyOTPSignup, sendOTPLogin, verifyOTPLogin, processVideoLink, newSignup, newSignupVerify
+    sendOTPSignup, verifyOTPSignup, sendOTPLogin, verifyOTPLogin, processVideoLink, newSignup, newSignupVerify, newLogin
  };

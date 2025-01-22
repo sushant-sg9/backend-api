@@ -1,6 +1,6 @@
 const express = require('express')
 const { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById, getVideoLinkDetails, sendEmail, verifyOtpEmail, 
-    sendOTPSignup, verifyOTPSignup, sendOTPLogin, verifyOTPLogin, processVideoLink, newSignup, newSignupVerify} = require('../controllers/userController')
+    sendOTPSignup, verifyOTPSignup, sendOTPLogin, verifyOTPLogin, processVideoLink, newSignup, newSignupVerify, newLogin} = require('../controllers/userController')
 const  {protect}  = require('../middleware/authController')
 const { route } = require('express/lib/application')
 
@@ -22,6 +22,7 @@ router.route('/sendOTPLogin').post(sendOTPLogin)
 router.route('/process_video').post(processVideoLink)
 router.route('/newSignup').post(newSignup)
 router.route('/newSignupVerify').post(newSignupVerify)
+router.route('/newLogin').post(newLogin)
 
 
 module.exports = router
