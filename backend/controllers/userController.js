@@ -222,6 +222,90 @@ const newLogin = asyncHandler(async (req, res) => {
     }
 });
 
+const sendOTPEmail = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    try {
+        const otp = Math.floor(1000 + Math.random() * 9000).toString();
+        
+        await OTP.findOneAndUpdate(
+            { email },
+            { email, otp },
+            { upsert: true, new: true }
+        );
+
+        const mailOptions = {
+            from: '"HookStep" <donotreply1@hookstep.net>',
+            to: email,
+            subject: "Password Reset Request",
+            html: `
+                <p>Your password reset OTP is: <strong>${otp}</strong></p>
+                <p>This OTP will expire in 5 minutes.</p>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.status(200).json({
+            success: true,
+            message: 'Password reset OTP sent successfully'
+        });
+
+    } catch (error) {
+        await OTP.deleteOne({ email });
+        res.status(500).json({
+            success: false,
+            message: 'Failed to send OTP'
+        });
+    }
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+        return res.status(400).json({ message: "All fields are required" });
+    }
+
+    try {
+        const otpDoc = await OTP.findOne({ email });
+        
+        if (!otpDoc || otpDoc.otp !== otp) {
+            return res.status(401).json({ message: 'Invalid or expired OTP' });
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        user.password = newPassword;
+        await user.save();
+        
+        await OTP.deleteOne({ email });
+
+        res.status(200).json({
+            success: true,
+            message: 'Password updated successfully'
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Password reset failed'
+        });
+    }
+});
+
 const sendOTPSignup = asyncHandler(async (req, res) => {
     const { email } = req.body;
 
@@ -1178,5 +1262,5 @@ const processVideoLink = asyncHandler(async (req, res) => {
 }); 
 
 module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById, getVideoLinkDetails, sendEmail, verifyOtpEmail,
-    sendOTPSignup, verifyOTPSignup, sendOTPLogin, verifyOTPLogin, processVideoLink, newSignup, newSignupVerify, newLogin
+    sendOTPSignup, verifyOTPSignup, sendOTPLogin, verifyOTPLogin, processVideoLink, newSignup, newSignupVerify, newLogin, sendOTPEmail, resetPassword
  };
