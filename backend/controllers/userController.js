@@ -1262,6 +1262,40 @@ const processVideoLink = asyncHandler(async (req, res) => {
     }
 }); 
 
+
+const BASE_URL = 'https://headstart.genixbit.com/api';
+
+const getAllCountries = asyncHandler(async (req, res) => {
+    const response = await axios.get(`${BASE_URL}/getAllCountries`);
+    res.json(response.data);
+});
+
+const getStatesByCountry = asyncHandler(async (req, res) => {
+    const { countryId } = req.params;
+
+    if (!countryId) {
+        res.status(400);
+        throw new Error('Country ID is required');
+    }
+
+    const response = await axios.get(`${BASE_URL}/getState/${countryId}`);
+    res.json(response.data);
+});
+
+const getCitiesByState = asyncHandler(async (req, res) => {
+    const { stateId } = req.params;
+
+    if (!stateId) {
+        res.status(400);
+        throw new Error('State ID is required');
+    }
+
+    const response = await axios.get(`${BASE_URL}/getCity/${stateId}`);
+    res.json(response.data);
+});
+
+
+
 module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById, getVideoLinkDetails, sendEmail, verifyOtpEmail,
-    sendOTPSignup, verifyOTPSignup, sendOTPLogin, verifyOTPLogin, processVideoLink, newSignup, newSignupVerify, newLogin, sendOTPEmail, resetPassword
+    sendOTPSignup, verifyOTPSignup, sendOTPLogin, verifyOTPLogin, processVideoLink, newSignup, newSignupVerify, newLogin, sendOTPEmail, resetPassword, getAllCountries,getStatesByCountry, getCitiesByState
  };
