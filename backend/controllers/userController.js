@@ -183,6 +183,7 @@ const newLogin = asyncHandler(async (req, res) => {
         }
 
         const isPasswordMatch = await user.matchPasswords(password);
+        console.log(user.password)
 
         if (!isPasswordMatch) {
             return res.status(401).json({
