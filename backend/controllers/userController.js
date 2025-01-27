@@ -164,9 +164,14 @@ const newSignupVerify = asyncHandler(async (req, res) => {
 
 const newLogin = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
-
+    const testUser = await User.findOne({ email });
     if(email === 'testing@gmail.com' && password === '1234'){
-
+        res.status(200).json({
+            success: true,
+            message: "Login successful",
+            user: testUser.email,
+            token: generateToken(testUser._id)
+        });
     }
 
     if (!email || !password) {
