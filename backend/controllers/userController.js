@@ -170,6 +170,7 @@ const newLogin = asyncHandler(async (req, res) => {
             success: true,
             message: "Login successful",
             user: testUser.email,
+            _id: testUser._id,
             token: generateToken(testUser._id)
         });
     }
@@ -194,7 +195,7 @@ const newLogin = asyncHandler(async (req, res) => {
         const isPasswordMatch = await user.matchPasswords(password);
         console.log(user.password)
 
-        if (!isPasswordMatch) {
+        if (!isPasswordMatch){
             return res.status(401).json({
                 success: false,
                 message: "Invalid password"
