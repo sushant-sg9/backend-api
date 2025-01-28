@@ -166,11 +166,14 @@ const newLogin = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     const testUser = await User.findOne({ email });
     if(email === 'testing@gmail.com' && password === '1234'){
+        const userResponse = {
+            _id: testUser._id,
+            email: testUser.email,
+        };
         res.status(200).json({
             success: true,
             message: "Login successful",
-            user: testUser.email,
-            _id: testUser._id,
+            user:userResponse,
             token: generateToken(testUser._id)
         });
     }
