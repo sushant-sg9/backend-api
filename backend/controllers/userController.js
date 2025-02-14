@@ -66,7 +66,7 @@ const newSignup = asyncHandler(async (req, res) => {
         `;
 
         const mailOptions = {
-            from: '"HookStep" <donotreply@hookstep.net >',
+            from: '"HookStep" <donotreply@hookstep.net>',
             to: email,
             subject: "Welcome to HookStep - Verify Your Email",
             text: `Your OTP for verification is: ${otp}`,
