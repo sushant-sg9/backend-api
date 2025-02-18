@@ -28,8 +28,8 @@ router.route('/sendOTPEmail').post(sendOTPEmail)
 router.route('/resetPassword').post(resetPassword)
 router.route('/getAllCountries').get(getAllCountries)
 router.route('/getStatesByCountry/:countryId').get(getStatesByCountry)
-router.route('/getCitiesByState/:stateId').get( getCitiesByState)
-router.route('/getDesignationList').get(getDesignationList)
+router.route('/getCitiesByState/:stateId').get(getCitiesByState)
+router.route('/getDesignationList').get(protect, getDesignationList)
 
 
 module.exports = router
