@@ -10,7 +10,7 @@ router.route('/getPopularity').get(adminProtect,getPopularity);
 router.route('/getUserById/:id').get(adminProtect, getUserById);
 router.route('/getMultipleUserInfo/:userIds').get(adminProtect, getMultipleUserInfo);
 router.route('/change-password').post(adminProtect, changeAdminPassword);
-router.route('/addDesignation').post(adminProtect,addDesignation);
+router.route('/addDesignation').post(addDesignation);
 router.route('/getAllDesignations').get(adminProtect,getAllDesignations);
 router.route('/addVideo').post(addVideo);
 router.route('/getAllVideo').get(getAllVideos);

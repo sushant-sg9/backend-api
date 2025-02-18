@@ -1317,15 +1317,23 @@ const getCitiesByState = asyncHandler(async (req, res) => {
 
 const getDesignationList = asyncHandler(async (req, res) => {
     try {
-        const designations = await Designation.find({})
+        const designations = await Designation.find({ name: { $ne: "Other" } })
             .select('name')
             .sort({ name: 1 });
 
-      
-        const formattedDesignations = designations.map(designation => ({
+        const otherDesignation = await Designation.findOne({ name: "Other" });
+
+        let formattedDesignations = designations.map(designation => ({
             value: designation._id,
             label: designation.name
         }));
+
+        if (otherDesignation) {
+            formattedDesignations.push({
+                value: otherDesignation._id,
+                label: otherDesignation.name
+            });
+        }
 
         res.status(200).json({
             success: true,
