@@ -1,6 +1,7 @@
 const express = require('express')
 const { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById, getVideoLinkDetails, sendEmail, verifyOtpEmail, 
-    sendOTPSignup, verifyOTPSignup, sendOTPLogin, verifyOTPLogin, processVideoLink, newSignup, newSignupVerify, newLogin, sendOTPEmail, resetPassword, getAllCountries, getStatesByCountry, getCitiesByState} = require('../controllers/userController')
+    sendOTPSignup, verifyOTPSignup, sendOTPLogin, verifyOTPLogin, processVideoLink, newSignup, newSignupVerify, newLogin, sendOTPEmail, resetPassword, getAllCountries, 
+    getStatesByCountry, getCitiesByState, getDesignationList} = require('../controllers/userController')
 const  {protect}  = require('../middleware/authController')
 const { route } = require('express/lib/application')
 
@@ -28,6 +29,7 @@ router.route('/resetPassword').post(resetPassword)
 router.route('/getAllCountries').get(getAllCountries)
 router.route('/getStatesByCountry/:countryId').get(getStatesByCountry)
 router.route('/getCitiesByState/:stateId').get( getCitiesByState)
+router.route('/getDesignationList').get(getDesignationList)
 
 
 module.exports = router

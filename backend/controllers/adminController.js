@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const generateToken = require("../Config/generateToken");
 const Admin = require("../models/adminModels");
 const User  = require("../models/userModel"); 
+const Designation = require("../models/designationModels")
 
 const adminLogin = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
@@ -167,4 +168,53 @@ const changeAdminPassword = asyncHandler(async (req, res) => {
     });
 });
 
-module.exports = { adminLogin, getAllUsers, getPopularity, getUserById, changeAdminPassword , getMultipleUserInfo};
+const addDesignation = asyncHandler(async (req, res) => {
+    try {
+        const { name } = req.body;
+
+        if (!name) {
+            res.status(400);
+            throw new Error("Designation name is required");
+        }
+
+        const existingDesignation = await Designation.findOne({ name });
+        if (existingDesignation) {
+            res.status(400);
+            throw new Error("Designation already exists");
+        }
+
+        const designation = await Designation.create({
+            name
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Designation added successfully",
+            data: designation
+        });
+    } catch (error) {
+        res.status(error.status || 500);
+        throw new Error(error.message || 'Failed to add designation');
+    }
+});
+
+const getAllDesignations = asyncHandler(async (req, res) => {
+    try {
+        const designations = await Designation.find({})
+            .select('name')
+            .sort({ name: 1 });
+
+        res.status(200).json({
+            success: true,
+            message: "Designations retrieved successfully",
+            count: designations.length,
+            data: designations
+        });
+    } catch (error) {
+        res.status(500);
+        throw new Error('Failed to retrieve designations');
+    }
+});
+
+
+module.exports = { adminLogin, getAllUsers, getPopularity, getUserById, changeAdminPassword , getMultipleUserInfo, addDesignation, getAllDesignations};

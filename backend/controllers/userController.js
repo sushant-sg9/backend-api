@@ -6,6 +6,7 @@ const twilio = require('twilio');
 const OTP = require('../models/otpModel'); 
 require('dotenv').config();
 const { IgApiClient } = require('instagram-private-api');
+const Designation = require("../models/designationModels");
 const axios = require('axios');
 // const youtubedl = require('youtube-dl-exec');
 // const { InstagramAPI } = require('instagram-private-api');
@@ -1313,8 +1314,32 @@ const getCitiesByState = asyncHandler(async (req, res) => {
     res.json(response.data);
 });
 
+const getDesignationList = asyncHandler(async (req, res) => {
+    try {
+        const designations = await Designation.find({})
+            .select('name')
+            .sort({ name: 1 });
+
+      
+        const formattedDesignations = designations.map(designation => ({
+            value: designation._id,
+            label: designation.name
+        }));
+
+        res.status(200).json({
+            success: true,
+            message: "Designation list retrieved successfully",
+            count: formattedDesignations.length,
+            data: formattedDesignations
+        });
+    } catch (error) {
+        res.status(500);
+        throw new Error('Failed to retrieve designation list');
+    }
+});
 
 
 module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById, getVideoLinkDetails, sendEmail, verifyOtpEmail,
-    sendOTPSignup, verifyOTPSignup, sendOTPLogin, verifyOTPLogin, processVideoLink, newSignup, newSignupVerify, newLogin, sendOTPEmail, resetPassword, getAllCountries,getStatesByCountry, getCitiesByState
+    sendOTPSignup, verifyOTPSignup, sendOTPLogin, verifyOTPLogin, processVideoLink, newSignup, newSignupVerify, newLogin, sendOTPEmail, resetPassword, getAllCountries,getStatesByCountry, 
+    getCitiesByState, getDesignationList
  };
