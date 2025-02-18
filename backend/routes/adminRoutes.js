@@ -1,5 +1,5 @@
 const express = require('express');
-const { adminLogin, getAllUsers, getPopularity, getUserById, getMultipleUserInfo, changeAdminPassword, addDesignation, getAllDesignations } = require('../controllers/adminController');
+const { adminLogin, getAllUsers, getPopularity, getUserById, getMultipleUserInfo, changeAdminPassword, addDesignation, getAllDesignations, addVideo, getAllVideos } = require('../controllers/adminController');
 const  {adminProtect}  = require('../middleware/authController')
 
 const router = express.Router();
@@ -12,6 +12,8 @@ router.route('/getMultipleUserInfo/:userIds').get(adminProtect, getMultipleUserI
 router.route('/change-password').post(adminProtect, changeAdminPassword);
 router.route('/addDesignation').post(adminProtect,addDesignation);
 router.route('/getAllDesignations').get(adminProtect,getAllDesignations);
+router.route('/addVideo').post(addVideo);
+router.route('/getAllVideo').get(getAllVideos);
 
 
 module.exports = router;

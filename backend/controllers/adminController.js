@@ -3,6 +3,7 @@ const generateToken = require("../Config/generateToken");
 const Admin = require("../models/adminModels");
 const User  = require("../models/userModel"); 
 const Designation = require("../models/designationModels")
+const Video = require('../models/videoModels');
 
 const adminLogin = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
@@ -216,5 +217,59 @@ const getAllDesignations = asyncHandler(async (req, res) => {
     }
 });
 
+const addVideo = asyncHandler(async (req, res) => {
+    try {
+        const { videoUrl, thumbnailUrl } = req.body;
 
-module.exports = { adminLogin, getAllUsers, getPopularity, getUserById, changeAdminPassword , getMultipleUserInfo, addDesignation, getAllDesignations};
+        if (!videoUrl || !thumbnailUrl) {
+            res.status(400);
+            throw new Error("Video URL and thumbnail URL are required");
+        }
+
+        const youtubeUrlPattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/|youtu\.be\/|youtube\.com\/shorts\/).+/;
+        if (!youtubeUrlPattern.test(videoUrl)) {
+            res.status(400);
+            throw new Error("Invalid YouTube URL format");
+        }
+
+        const existingVideo = await Video.findOne({ videoUrl });
+        if (existingVideo) {
+            res.status(400);
+            throw new Error("Video already exists");
+        }
+
+        const video = await Video.create({
+            videoUrl,
+            thumbnailUrl
+        });
+
+        res.status(201).json({
+            success: true,
+            message: "Video added successfully",
+            data: video
+        });
+    } catch (error) {
+        res.status(error.status || 500);
+        throw new Error(error.message || 'Failed to add video');
+    }
+});
+
+const getAllVideos = asyncHandler(async (req, res) => {
+    try {
+        const videos = await Video.find({})
+            .sort({ createdAt: -1 }); 
+
+        res.status(200).json({
+            success: true,
+            message: "Videos retrieved successfully",
+            count: videos.length,
+            data: videos
+        });
+    } catch (error) {
+        res.status(500);
+        throw new Error('Failed to retrieve videos');
+    }
+});
+
+
+module.exports = { adminLogin, getAllUsers, getPopularity, getUserById, changeAdminPassword , getMultipleUserInfo, addDesignation, getAllDesignations, addVideo, getAllVideos };

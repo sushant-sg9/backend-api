@@ -7,6 +7,7 @@ const OTP = require('../models/otpModel');
 require('dotenv').config();
 const { IgApiClient } = require('instagram-private-api');
 const Designation = require("../models/designationModels");
+const Video= require("../models/videoModels")
 const axios = require('axios');
 // const youtubedl = require('youtube-dl-exec');
 // const { InstagramAPI } = require('instagram-private-api');
@@ -1338,8 +1339,25 @@ const getDesignationList = asyncHandler(async (req, res) => {
     }
 });
 
+const getAllVideos = asyncHandler(async (req, res) => {
+    try {
+        const videos = await Video.find({})
+            .sort({ createdAt: -1 }); 
+
+        res.status(200).json({
+            success: true,
+            message: "Videos retrieved successfully",
+            count: videos.length,
+            data: videos
+        });
+    } catch (error) {
+        res.status(500);
+        throw new Error('Failed to retrieve videos');
+    }
+});
+
 
 module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById, getVideoLinkDetails, sendEmail, verifyOtpEmail,
     sendOTPSignup, verifyOTPSignup, sendOTPLogin, verifyOTPLogin, processVideoLink, newSignup, newSignupVerify, newLogin, sendOTPEmail, resetPassword, getAllCountries,getStatesByCountry, 
-    getCitiesByState, getDesignationList
+    getCitiesByState, getDesignationList, getAllVideos
  };
