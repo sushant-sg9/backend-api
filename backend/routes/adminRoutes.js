@@ -12,8 +12,8 @@ router.route('/getMultipleUserInfo/:userIds').get(adminProtect, getMultipleUserI
 router.route('/change-password').post(adminProtect, changeAdminPassword);
 router.route('/addDesignation').post(addDesignation);
 router.route('/getAllDesignations').get(adminProtect,getAllDesignations);
-router.route('/addVideo').post(addVideo);
-router.route('/getAllVideo').get(getAllVideos);
+router.route('/addVideo').post(adminProtect,addVideo);
+router.route('/getAllVideo').get(adminProtect,getAllVideos);
 
 
 module.exports = router;
