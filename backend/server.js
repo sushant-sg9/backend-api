@@ -13,16 +13,12 @@ ConnectDB()
 const app = express();
 app.use(express.json())
 const corsOptions = {
-    origin: '*', 
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    origin: '*',
     credentials: true
   };
   
   app.use(cors(corsOptions));
   
-
-
 app.get("/", (req, res) => {
     res.send("API is Running Sucessfully");
 })
