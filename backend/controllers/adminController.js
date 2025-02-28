@@ -272,6 +272,42 @@ const getAllVideos = asyncHandler(async (req, res) => {
   }
 });
 
+const updateVideo = asyncHandler(async (req, res) => {
+    try {
+      const { id, videoUrl, thumbnailUrl } = req.body;
+  
+      if (!id || !videoUrl.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: "Video ID and URL are required",
+        });
+      }
+  
+      const video = await Video.findById(id);
+      if (!video) {
+        return res.status(404).json({
+          success: false,
+          message: "Video not found",
+        });
+      }
+  
+      video.videoUrl = videoUrl;
+      video.thumbnailUrl = thumbnailUrl;
+      await video.save();
+  
+      res.status(200).json({
+        success: true,
+        message: "Video updated successfully",
+        data: video,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message || "Failed to update video",
+      });
+    }
+  });
+
 const deleteVideo = asyncHandler(async (req, res) => {
   try {
     const { id } = req.body;
@@ -311,4 +347,5 @@ module.exports = {
   addVideo,
   getAllVideos,
   deleteVideo,
+  updateVideo,
 };
