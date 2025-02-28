@@ -14,7 +14,7 @@ router.route('/addDesignation').post(addDesignation);
 router.route('/getAllDesignations').get(adminProtect,getAllDesignations);
 router.route('/addVideo').post(adminProtect,addVideo);
 router.route('/getAllVideo').get(adminProtect,getAllVideos);
-router.route("/videos/:id").delete(deleteVideo);
+router.route("/deleteVideo").post(adminProtect,deleteVideo);
 
 
 
