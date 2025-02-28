@@ -214,46 +214,47 @@ const getAllDesignations = asyncHandler(async (req, res) => {
 });
 
 const addVideo = asyncHandler(async (req, res) => {
-  try {
-    const { videoUrl, thumbnailUrl } = req.body;
-
-    if (!videoUrl || !thumbnailUrl) {
-      res.status(400);
-      throw new Error("Video URL and thumbnail URL are required");
-    }
-
-    const youtubeUrlPattern =
-      /^(https?:\/\/)?(www\.)?(youtube\.com\/|youtu\.be\/|youtube\.com\/shorts\/).+/;
-    if (!youtubeUrlPattern.test(videoUrl)) {
-      res.status(400).json({ 
-        success: false,
-        message: "Invalid YouTube video URL" 
-    });
-    }
-
-    const existingVideo = await Video.findOne({ videoUrl });
-    if (existingVideo) {
-      res.status(400).json({
-        success: false,
-        message: "Video already exists",
+    try {
+      const { videoUrl, thumbnailUrl } = req.body;
+  
+      if (!videoUrl || !thumbnailUrl) {
+        res.status(400);
+        throw new Error("Video URL and thumbnail URL are required");
+      }
+  
+      const youtubeUrlPattern =
+        /^(https?:\/\/)?(www\.)?(youtube\.com\/|youtu\.be\/|youtube\.com\/shorts\/).+/;
+      if (!youtubeUrlPattern.test(videoUrl)) {
+        return res.status(400).json({ 
+          success: false,
+          message: "Invalid YouTube video URL" 
+        });
+      }
+  
+      const existingVideo = await Video.findOne({ videoUrl });
+      if (existingVideo) {
+        return res.status(400).json({
+          success: false,
+          message: "Video already exists",
+        });
+      }
+  
+      const video = await Video.create({
+        videoUrl,
+        thumbnailUrl,
       });
+  
+      res.status(201).json({
+        success: true,
+        message: "Video added successfully",
+        data: video,
+      });
+    } catch (error) {
+      res.status(error.status || 500);
+      throw new Error(error.message || "Failed to add video");
     }
-
-    const video = await Video.create({
-      videoUrl,
-      thumbnailUrl,
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "Video added successfully",
-      data: video,
-    });
-  } catch (error) {
-    res.status(error.status || 500);
-    throw new Error(error.message || "Failed to add video");
-  }
-});
+  });
+  
 
 const getAllVideos = asyncHandler(async (req, res) => {
   try {
