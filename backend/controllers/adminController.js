@@ -195,6 +195,68 @@ const addDesignation = asyncHandler(async (req, res) => {
   }
 });
 
+const updateDesignation = asyncHandler(async (req, res) => {
+    try {
+      const { id, name } = req.body;
+  
+      if (!id || !name) {
+        res.status(400);
+        throw new Error("ID and new name are required");
+      }
+  
+      const designation = await Designation.findById(id);
+      if (!designation) {
+        res.status(404);
+        throw new Error("Designation not found");
+      }
+  
+      const existingDesignation = await Designation.findOne({ name });
+      if (existingDesignation && existingDesignation._id.toString() !== id) {
+        res.status(400);
+        throw new Error("A designation with this name already exists");
+      }
+  
+      designation.name = name;
+      await designation.save();
+  
+      res.status(200).json({
+        success: true,
+        message: "Designation updated successfully",
+        data: designation,
+      });
+    } catch (error) {
+      res.status(error.status || 500).json({ success: false, message: error.message || "Failed to update designation" });
+    }
+  });
+
+  const deleteDesignation = asyncHandler(async (req, res) => {
+    try {
+      const { id } = req.body;
+  
+      if (!id) {
+        res.status(400);
+        throw new Error("ID is required");
+      }
+  
+      const designation = await Designation.findById(id);
+      if (!designation) {
+        res.status(404);
+        throw new Error("Designation not found");
+      }
+  
+      await Designation.deleteOne({ _id: id });
+  
+      res.status(200).json({
+        success: true,
+        message: "Designation deleted successfully",
+      });
+    } catch (error) {
+      res.status(error.status || 500).json({ success: false, message: error.message || "Failed to delete designation" });
+    }
+  });
+  
+  
+
 const getAllDesignations = asyncHandler(async (req, res) => {
   try {
     const designations = await Designation.find({})
@@ -348,4 +410,6 @@ module.exports = {
   getAllVideos,
   deleteVideo,
   updateVideo,
+  updateDesignation,
+  deleteDesignation
 };
