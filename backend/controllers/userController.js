@@ -68,7 +68,7 @@ const newSignup = asyncHandler(async (req, res) => {
         `;
 
         const mailOptions = {
-            from: '"HookStep" <donotreply@hookstep.net>',
+            from: '"HookStep" <headstaart@gmail.com>',
             to: email,
             subject: "Welcome to HookStep - Verify Your Email",
             text: `Your OTP for verification is: ${otp}`,
@@ -266,7 +266,7 @@ const sendOTPEmail = asyncHandler(async (req, res) => {
         );
 
         const mailOptions = {
-            from: '"HookStep" <donotreply@hookstep.net >',
+            from: '"HookStep" <headstaart@gmail.com >',
             to: email,
             subject: "Password Reset Request",
             html: `
@@ -353,7 +353,7 @@ const sendOTPSignup = asyncHandler(async (req, res) => {
         `;
 
         const mailOptions = {
-            from: '"HookStep" <donotreply@hookstep.net >',
+            from: '"HookStep" <headstaart@gmail.com >',
             to: email,
             subject: "Welcome to HookStep - Verify Your Email",
             text: `Your OTP for verification is: ${otp}`,
@@ -583,7 +583,7 @@ const sendOTPLogin = asyncHandler(async (req, res) => {
         `;
     
         const mailOptions = {
-            from: '"HookStep" <donotreply@hookstep.net >',
+            from: '"HookStep" <headstaart@gmail.com >',
             to: email,
             subject: "Welcome to HookStep",
             text: "Thank you for joining us!",
@@ -965,7 +965,7 @@ const sendEmail = asyncHandler(async (req, res) => {
     `;
 
     const mailOptions = {
-        from: '"HookStep" <donotreply@hookstep.net >',
+        from: '"HookStep" <headstaart@gmail.com >',
         to: to,
         subject: "Welcome to HookStep",
         text: "Thank you for joining us!",
