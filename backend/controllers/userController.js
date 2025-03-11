@@ -9,6 +9,7 @@ const { IgApiClient } = require('instagram-private-api');
 const Designation = require("../models/designationModels");
 const Video= require("../models/videoModels")
 const axios = require('axios');
+const useragent = require('express-useragent');
 // const youtubedl = require('youtube-dl-exec');
 // const { InstagramAPI } = require('instagram-private-api');
 // const FB = require('fb');
@@ -165,6 +166,17 @@ const newSignupVerify = asyncHandler(async (req, res) => {
 });
 
 const newLogin = asyncHandler(async (req, res) => {
+    const deviceInfo = {
+        ip: req.ip || req.connection.remoteAddress,
+        browser: req.useragent.browser,
+        version: req.useragent.version,
+        os: req.useragent.os,
+        platform: req.useragent.platform,
+        isMobile: req.useragent.isMobile,
+        isDesktop: req.useragent.isDesktop,
+        isTablet: req.useragent.isTablet,
+        source: req.useragent.source
+    };
     const { email, password } = req.body;
     const testUser = await User.findOne({ email });
     if(email === 'testing@gmail.com' && password === '1234'){
@@ -198,7 +210,6 @@ const newLogin = asyncHandler(async (req, res) => {
         }
 
         const isPasswordMatch = await user.matchPasswords(password);
-        console.log(user.password)
 
         if (!isPasswordMatch){
             return res.status(401).json({
@@ -208,6 +219,20 @@ const newLogin = asyncHandler(async (req, res) => {
         }
 
         user.lastLogin = new Date();
+        user.lastDevice = deviceInfo;
+        
+        if (!user.loginHistory) {
+            user.loginHistory = [];
+        }
+        
+        user.loginHistory.push({
+            timestamp: new Date(),
+            deviceInfo: deviceInfo
+        });
+        
+        if (user.loginHistory.length > 10) {
+            user.loginHistory = user.loginHistory.slice(-10);
+        }
         await user.save();
 
         const userResponse = {

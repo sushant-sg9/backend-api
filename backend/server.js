@@ -7,12 +7,14 @@ const tokenRoutes = require('./routes/tokenRoutes')
 const mediaRoutes = require('./routes/mediaRoutes')
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const cors = require("cors");
+const useragent = require('express-useragent');
 
 dotenv.config();
 ConnectDB()
 const app = express();
 app.use(express.json())
 app.use(cors({ origin: true, credentials: true }));
+app.use(useragent.express());
   
 app.get("/", (req, res) => {
     res.send("API is Running Sucessfully");
