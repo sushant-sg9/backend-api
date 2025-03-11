@@ -71,34 +71,9 @@ const userSchema = mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    lastDevice: {
-        browser: { type: String },
-        version: { type: String },
-        os: { type: String },
-        platform: { type: String },
-        isMobile: { type: Boolean },
-        isDesktop: { type: Boolean },
-        isTablet: { type: Boolean },
-        ip: { type: String },
-        source: { type: String }
+    loginDevice:{
+        type: String
     },
-    loginHistory: [{
-        timestamp: {
-            type: Date,
-            default: Date.now
-        },
-        deviceInfo: {
-            browser: { type: String },
-            version: { type: String },
-            os: { type: String },
-            platform: { type: String },
-            isMobile: { type: Boolean },
-            isDesktop: { type: Boolean },
-            isTablet: { type: Boolean },
-            ip: { type: String },
-            source: { type: String }
-        }
-    }],
     otp: {
         type: String,
         required: false,
