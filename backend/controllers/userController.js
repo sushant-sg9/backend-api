@@ -13,7 +13,11 @@ const useragent = require('express-useragent');
 // const youtubedl = require('youtube-dl-exec');
 // const { InstagramAPI } = require('instagram-private-api');
 // const FB = require('fb');
+const { MailerSend, EmailParams, Sender, Recipient } = require("mailersend");
 
+const mailerSend = new MailerSend({
+    apiKey: process.env.MAILERSEND_API_KEY,
+  });
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH;
@@ -37,7 +41,8 @@ const transporter = nodemailer.createTransport({
 
 const newSignup = asyncHandler(async (req, res) => {
     const { email, mobileCode, mobile } = req.body;
-
+    console.log("MailerSend API Key:", process.env.MAILERSEND_API_KEY.substring(0, 5) + "...");
+    console.log("From Email:", process.env.MAIL_FROM_ADDRESS);
     if (!email || !mobileCode || !mobile) {
         return res.status(400).json({ message: "Missing required fields" });
     }
@@ -68,25 +73,27 @@ const newSignup = asyncHandler(async (req, res) => {
             <p>Thank you for choosing HookStep!</p>
         `;
 
-        const mailOptions = {
-            from: '"HookStep" <headstaart@gmail.com>',
-            to: email,
-            subject: "Welcome to HookStep - Verify Your Email",
-            text: `Your OTP for verification is: ${otp}`,
-            html: htmlContent,
-        };
+        const sentFrom = new Sender(process.env.MAIL_FROM_ADDRESS, process.env.MAIL_FROM_NAME);
+        const recipient = new Recipient(email, "");
+        
+        const emailParams = new EmailParams()
+            .setFrom(sentFrom)
+            .setTo([recipient])
+            .setSubject("Welcome to HookStep - Verify Your Email")
+            .setHtml(htmlContent)
+            .setText(`Your OTP for verification is: ${otp}`);
 
-        const info = await transporter.sendMail(mailOptions);
+        const emailResponse = await mailerSend.email.send(emailParams);
 
         res.status(200).json({
             success: true,
             message: 'OTP sent successfully to your email',
-            info: info.response
+            info: emailResponse
         });
 
     } catch (error) {
         await OTP.deleteOne({ email });
-        
+        console.error("MailerSend Error:", error);
         res.status(500).json({
             success: false,
             message: 'Failed to send OTP',
@@ -199,7 +206,6 @@ const newLogin = asyncHandler(async (req, res) => {
         }
 
         const isPasswordMatch = await user.matchPasswords(password);
-        console.log(user.password)
 
         if (!isPasswordMatch){
             return res.status(401).json({
@@ -1286,7 +1292,7 @@ const processVideoLink = asyncHandler(async (req, res) => {
 }); 
 
 
-const BASE_URL = 'https://headstart.genixbit.com/api';
+const BASE_URL = 'https://artist.genixbit.com/api/';
 
 const getAllCountries = asyncHandler(async (req, res) => {
     const response = await axios.get(`${BASE_URL}/getAllCountries`);
