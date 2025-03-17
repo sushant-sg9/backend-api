@@ -1295,32 +1295,53 @@ const processVideoLink = asyncHandler(async (req, res) => {
 const BASE_URL = 'https://artist.genixbit.com/api/';
 
 const getAllCountries = asyncHandler(async (req, res) => {
-    const response = await axios.get(`${BASE_URL}/getAllCountries`);
-    res.json(response.data);
+    try {
+        const response = await axios.get(`${BASE_URL}getAllCountries`);
+        res.json(response.data);
+    } catch (error) {
+        res.status(error.response?.status || 500).json({
+            success: false,
+            message: error.response?.data?.message || "Failed to fetch countries",
+        });
+    }
 });
 
 const getStatesByCountry = asyncHandler(async (req, res) => {
-    const { countryId } = req.params;
+    try {
+        const { countryId } = req.params;
 
-    if (!countryId) {
-        res.status(400);
-        throw new Error('Country ID is required');
+        if (!countryId) {
+            res.status(400);
+            throw new Error('Country ID is required');
+        }
+
+        const response = await axios.get(`${BASE_URL}getState/${countryId}`);
+        res.json(response.data);
+    } catch (error) {
+        res.status(error.response?.status || 500).json({
+            success: false,
+            message: error.response?.data?.message || "Failed to fetch states",
+        });
     }
-
-    const response = await axios.get(`${BASE_URL}/getState/${countryId}`);
-    res.json(response.data);
 });
 
 const getCitiesByState = asyncHandler(async (req, res) => {
-    const { stateId } = req.params;
+    try {
+        const { stateId } = req.params;
 
-    if (!stateId) {
-        res.status(400);
-        throw new Error('State ID is required');
+        if (!stateId) {
+            res.status(400);
+            throw new Error('State ID is required');
+        }
+
+        const response = await axios.get(`${BASE_URL}getCity/${stateId}`);
+        res.json(response.data);
+    } catch (error) {
+        res.status(error.response?.status || 500).json({
+            success: false,
+            message: error.response?.data?.message || "Failed to fetch cities",
+        });
     }
-
-    const response = await axios.get(`${BASE_URL}/getCity/${stateId}`);
-    res.json(response.data);
 });
 
 const getDesignationList = asyncHandler(async (req, res) => {
