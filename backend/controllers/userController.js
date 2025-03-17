@@ -38,11 +38,8 @@ const transporter = nodemailer.createTransport({
 
 // var emailUpdate;
 
-
 const newSignup = asyncHandler(async (req, res) => {
     const { email, mobileCode, mobile } = req.body;
-    console.log("MailerSend API Key:", process.env.MAILERSEND_API_KEY.substring(0, 5) + "...");
-    console.log("From Email:", process.env.MAIL_FROM_ADDRESS);
     if (!email || !mobileCode || !mobile) {
         return res.status(400).json({ message: "Missing required fields" });
     }
@@ -66,34 +63,30 @@ const newSignup = asyncHandler(async (req, res) => {
             { upsert: true, new: true }
         );
 
-        const htmlContent = `
-            <p>Welcome to HookStep!</p>
-            <p>Please verify your email using this OTP: <strong>${otp}</strong></p>
-            <p>This OTP will expire in 5 minutes.</p>
-            <p>Thank you for choosing HookStep!</p>
-        `;
+        const mailOptions = {
+            from: `"${process.env.MAIL_FROM_NAME}" <${process.env.SMTP_USER}>`,
+            to: email,
+            subject: "Welcome to HookStep - Verify Your Email",
+            html: `
+                <p>Welcome to HookStep!</p>
+                <p>Please verify your email using this OTP: <strong>${otp}</strong></p>
+                <p>This OTP will expire in 5 minutes.</p>
+                <p>Thank you for choosing HookStep!</p>
+            `,
+            text: `Your OTP for verification is: ${otp}`,
+        };
 
-        const sentFrom = new Sender(process.env.MAIL_FROM_ADDRESS, process.env.MAIL_FROM_NAME);
-        const recipient = new Recipient(email, "");
-        
-        const emailParams = new EmailParams()
-            .setFrom(sentFrom)
-            .setTo([recipient])
-            .setSubject("Welcome to HookStep - Verify Your Email")
-            .setHtml(htmlContent)
-            .setText(`Your OTP for verification is: ${otp}`);
-
-        const emailResponse = await mailerSend.email.send(emailParams);
+        const emailResponse = await transporter.sendMail(mailOptions);
 
         res.status(200).json({
             success: true,
             message: 'OTP sent successfully to your email',
-            info: emailResponse
+            info: emailResponse,
         });
 
     } catch (error) {
         await OTP.deleteOne({ email });
-        console.error("MailerSend Error:", error);
+        console.error("Nodemailer Error:", error);
         res.status(500).json({
             success: false,
             message: 'Failed to send OTP',
@@ -101,6 +94,7 @@ const newSignup = asyncHandler(async (req, res) => {
         });
     }
 });
+
 
 
 const newSignupVerify = asyncHandler(async (req, res) => {
@@ -248,15 +242,16 @@ const newLogin = asyncHandler(async (req, res) => {
 
 const sendOTPEmail = asyncHandler(async (req, res) => {
     const { email } = req.body;
-    if (email === "testing@gmail.com") {
-        res.json({ 
-            otp: "1234",
-            message: "OTP sent successfully",
-        });
-    }
 
     if (!email) {
         return res.status(400).json({ message: "Email is required" });
+    }
+
+    if (email === "testing@gmail.com") {
+        return res.json({
+            otp: "1234",
+            message: "OTP sent successfully",
+        });
     }
 
     const user = await User.findOne({ email });
@@ -266,7 +261,7 @@ const sendOTPEmail = asyncHandler(async (req, res) => {
 
     try {
         const otp = Math.floor(1000 + Math.random() * 9000).toString();
-        
+
         await OTP.findOneAndUpdate(
             { email },
             { email, otp },
@@ -274,27 +269,29 @@ const sendOTPEmail = asyncHandler(async (req, res) => {
         );
 
         const mailOptions = {
-            from: '"HookStep" <headstaart@gmail.com >',
+            from: `"HookStep" <${process.env.SMTP_USER}>`,
             to: email,
             subject: "Password Reset Request",
             html: `
                 <p>Your password reset OTP is: <strong>${otp}</strong></p>
                 <p>This OTP will expire in 5 minutes.</p>
-            `
+            `,
         };
 
         await transporter.sendMail(mailOptions);
 
         res.status(200).json({
             success: true,
-            message: 'Password reset OTP sent successfully'
+            message: "Password reset OTP sent successfully",
         });
 
     } catch (error) {
         await OTP.deleteOne({ email });
+        console.error("Nodemailer Error:", error);
         res.status(500).json({
             success: false,
-            message: 'Failed to send OTP'
+            message: "Failed to send OTP",
+            error: error.toString(),
         });
     }
 });
