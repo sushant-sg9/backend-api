@@ -24,6 +24,7 @@ const authToken = process.env.TWILIO_AUTH;
 const client = new twilio(accountSid, authToken);
 
 const transporter = nodemailer.createTransport({
+    service:'gmail',
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
     secure: true, 
@@ -76,12 +77,20 @@ const newSignup = asyncHandler(async (req, res) => {
             text: `Your OTP for verification is: ${otp}`,
         };
 
-        const emailResponse = await transporter.sendMail(mailOptions);
+        transporter.sendMail(mailOptions, async (error, info) => {
+            if (error) await axios.post(`https://headstart.genixbit.com/api/sendEmail`,{
+                email,
+                message:`Welcome to HookStep!
+                Please verify your email using this OTP: ${otp}
+                This OTP will expire in 5 minutes.
+                Thank you for choosing HookStep!`
+            })
+            return info;
+          });
 
         res.status(200).json({
             success: true,
             message: 'OTP sent successfully to your email',
-            info: emailResponse,
         });
 
     } catch (error) {
@@ -255,6 +264,7 @@ const sendOTPEmail = asyncHandler(async (req, res) => {
         });
     }
 
+
     const user = await User.findOne({ email });
     if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -279,7 +289,17 @@ const sendOTPEmail = asyncHandler(async (req, res) => {
             `,
         };
 
-        await transporter.sendMail(mailOptions);
+    transporter.sendMail(mailOptions, async (error, info) => {
+        if (error) await axios.post(`https://headstart.genixbit.com/api/sendEmail`,{
+            email,
+            message:`Welcome to HookStep!
+            Please verify your email using this OTP: ${otp}
+            This OTP will expire in 5 minutes.
+            Thank you for choosing HookStep!`
+        })
+        console.log('Email send : ' + info.response);
+      });
+
 
         res.status(200).json({
             success: true,
@@ -366,12 +386,21 @@ const sendOTPSignup = asyncHandler(async (req, res) => {
             html: htmlContent,
         };
 
-        const info = await transporter.sendMail(mailOptions);
+       const emailResponse = transporter.sendMail(mailOptions, async (error, info) => {
+            if (error) await axios.post(`https://headstart.genixbit.com/api/sendEmail`,{
+                email,
+                message:`Welcome to HookStep!
+                Please verify your email using this OTP: ${otp}
+                This OTP will expire in 5 minutes.
+                Thank you for choosing HookStep!`
+            })
+            console.log('Email send : ' + info.response);
+          });
 
         res.status(200).json({
             success: true,
             message: 'OTP sent successfully to your email',
-            info: info.response
+            info: emailResponse
         });
 
     } catch (error) {
@@ -598,7 +627,16 @@ const sendOTPLogin = asyncHandler(async (req, res) => {
     
         transporter.sendMail(mailOptions, async (error, info) => {
             if (error) {
-                console.error(`Error: ${error}`);
+                transporter.sendMail(mailOptions, async (error, info) => {
+                    if (error) await axios.post(`https://headstart.genixbit.com/api/sendEmail`,{
+                        email,
+                        message:`Welcome to HookStep!
+                        Please verify your email using this OTP: ${otp}
+                        This OTP will expire in 5 minutes.
+                        Thank you for choosing HookStep!`
+                    })
+                    console.log('Email send : ' + info.response);
+                  });
                 return res.status(500).json({
                     success: false,
                     message: 'Email failed to send',
