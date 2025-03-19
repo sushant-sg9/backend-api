@@ -25,6 +25,7 @@ const {
   getCitiesByState,
   getDesignationList,
   getAllVideos,
+  sendBrevoEmailTest,
 } = require("../controllers/userController");
 const { protect } = require("../middleware/authController");
 const { route } = require("express/lib/application");
@@ -55,5 +56,6 @@ router.route("/getStatesByCountry/:countryId").get(getStatesByCountry);
 router.route("/getCitiesByState/:stateId").get(getCitiesByState);
 router.route("/getDesignationList").get(protect, getDesignationList);
 router.route("/getAllVideos").get(protect, getAllVideos);
+router.route("/test-brevo-email").get(sendBrevoEmailTest)
 
 module.exports = router;

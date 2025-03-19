@@ -14,6 +14,9 @@ const useragent = require('express-useragent');
 // const { InstagramAPI } = require('instagram-private-api');
 // const FB = require('fb');
 const { MailerSend, EmailParams, Sender, Recipient } = require("mailersend");
+const { sendSmtpEmail, apiInstance, ApiInstance } = require("../Config/brevomail.config");
+const { sendBrevoEmail } = require("../utils/sendMail");
+
 
 const mailerSend = new MailerSend({
     apiKey: process.env.MAILERSEND_API_KEY,
@@ -64,33 +67,16 @@ const newSignup = asyncHandler(async (req, res) => {
             { upsert: true, new: true }
         );
 
-        const mailOptions = {
-            from: `"${process.env.MAIL_FROM_NAME}" <${process.env.SMTP_USER}>`,
-            to: email,
-            subject: "Welcome to HookStep - Verify Your Email",
-            html: `
-                <p>Welcome to HookStep!</p>
-                <p>Please verify your email using this OTP: <strong>${otp}</strong></p>
-                <p>This OTP will expire in 5 minutes.</p>
-                <p>Thank you for choosing HookStep!</p>
-            `,
-            text: `Your OTP for verification is: ${otp}`,
-        };
-
-        transporter.sendMail(mailOptions, async (error, info) => {
-            if (error) await axios.post(`https://headstart.genixbit.com/api/sendEmail`,{
-                email,
-                message:`Welcome to HookStep!
-                Please verify your email using this OTP: ${otp}
-                This OTP will expire in 5 minutes.
-                Thank you for choosing HookStep!`
-            })
-            return info;
-          });
+        const { success, data } = await sendBrevoEmail(
+            email,
+           'verification',
+            otp
+          );          
 
         res.status(200).json({
             success: true,
             message: 'OTP sent successfully to your email',
+            
         });
 
     } catch (error) {
@@ -118,6 +104,7 @@ const newSignupVerify = asyncHandler(async (req, res) => {
 
     try {
         const otpDoc = await OTP.findOne({ email });
+        console.log(otpDoc);
         
         if (!otpDoc) {
             return res.status(401).json({ 
@@ -146,7 +133,7 @@ const newSignupVerify = asyncHandler(async (req, res) => {
         });
 
         
-        await OTP.deleteOne({ email });
+        // await OTP.deleteOne({ email });
 
         
         const userResponse = {
@@ -252,6 +239,8 @@ const newLogin = asyncHandler(async (req, res) => {
 const sendOTPEmail = asyncHandler(async (req, res) => {
     const { email } = req.body;
 
+    console.log(email);
+    
     
     if (!email) {
         return res.status(400).json({ message: "Email is required" });
@@ -279,27 +268,7 @@ const sendOTPEmail = asyncHandler(async (req, res) => {
             { upsert: true, new: true }
         );
 
-        const mailOptions = {
-            from: `"HookStep" <${process.env.SMTP_USER}>`,
-            to: email,
-            subject: "Password Reset Request",
-            html: `
-                <p>Your password reset OTP is: <strong>${otp}</strong></p>
-                <p>This OTP will expire in 5 minutes.</p>
-            `,
-        };
-
-    transporter.sendMail(mailOptions, async (error, info) => {
-        if (error) await axios.post(`https://headstart.genixbit.com/api/sendEmail`,{
-            email,
-            message:`Welcome to HookStep!
-            Please verify your email using this OTP: ${otp}
-            This OTP will expire in 5 minutes.
-            Thank you for choosing HookStep!`
-        })
-        console.log('Email send : ' + info.response);
-      });
-
+        const {success , data} = await sendBrevoEmail(email , 'resetPassword' , otp)
 
         res.status(200).json({
             success: true,
@@ -420,7 +389,7 @@ const verifyOTPSignup = asyncHandler(async (req, res) => {
     try {
         const otpDoc = await OTP.findOne({ email });
         
-        if (!otpDoc) {
+     if (!otpDoc) {
             return res.status(401).json({ 
                 success: false,
                 message: 'OTP expired. Please request a new OTP.' 
@@ -1429,8 +1398,38 @@ const getAllVideos = asyncHandler(async (req, res) => {
     }
 });
 
+// Test Bro Mail
+const sendBrevoEmailTest = asyncHandler(async (req, res) => {
+  try {
+    const HTMLcontent = `
+    <h1>
+      Mail send
+    </h1>
+    <br />
+    <p>
+      Hello , this is mail test
+    </p>
+    `;
+    const {success , data} = await sendBrevoEmail(
+      'gaziwani123@gmail.com',
+      'Mail Test',
+      HTMLcontent
+    );
+    res.status(201).json({
+      success,
+      message: 'Email sent successfully!',
+      messageId: data.messageId,
+    });
+  } catch (error) {
+    console.error('Error sending email:', error);
+    res
+      .status(500)
+      .json({ message: 'Failed to send email', error: error.message });
+  }
+});
+
 
 module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById, getVideoLinkDetails, sendEmail, verifyOtpEmail,
     sendOTPSignup, verifyOTPSignup, sendOTPLogin, verifyOTPLogin, processVideoLink, newSignup, newSignupVerify, newLogin, sendOTPEmail, resetPassword, getAllCountries,getStatesByCountry, 
-    getCitiesByState, getDesignationList, getAllVideos
+    getCitiesByState, getDesignationList, getAllVideos , sendBrevoEmailTest
  };
