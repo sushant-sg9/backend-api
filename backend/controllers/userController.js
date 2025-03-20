@@ -13,10 +13,9 @@ const useragent = require('express-useragent');
 // const youtubedl = require('youtube-dl-exec');
 // const { InstagramAPI } = require('instagram-private-api');
 // const FB = require('fb');
-const { MailerSend, EmailParams, Sender, Recipient } = require("mailersend");
-const { sendSmtpEmail, apiInstance, ApiInstance } = require("../Config/brevomail.config");
-const { sendBrevoEmail } = require("../utils/sendMail");
 
+const { MailerSend, EmailParams, Sender, Recipient } = require("mailersend");
+const { sendBrevoEmail } = require("../utils/sendMail");
 
 const mailerSend = new MailerSend({
     apiKey: process.env.MAILERSEND_API_KEY,
@@ -81,7 +80,7 @@ const newSignup = asyncHandler(async (req, res) => {
 
     } catch (error) {
         await OTP.deleteOne({ email });
-        console.error("Nodemailer Error:", error);
+        console.error( error);
         res.status(500).json({
             success: false,
             message: 'Failed to send OTP',
