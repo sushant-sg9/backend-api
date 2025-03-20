@@ -245,14 +245,6 @@ const sendOTPEmail = asyncHandler(async (req, res) => {
         return res.status(400).json({ message: "Email is required" });
     }
 
-    if (email === "testing@gmail.com") {
-        return res.json({
-            otp: "1234",
-            message: "OTP sent successfully",
-        });
-    }
-
-
     const user = await User.findOne({ email });
     if (!user) {
         return res.status(404).json({ message: "User not found" });
