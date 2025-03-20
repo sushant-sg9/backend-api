@@ -1,9 +1,10 @@
 const { sendSmtpEmail, ApiInstance } = require('../Config/brevomail.config');
-const { generateVerificationTemplate, generateResetPasswordTemplate } = require('./emailTemplates');
+const {
+  generateVerificationTemplate,
+  generateResetPasswordTemplate,
+} = require('./emailTemplates');
 
 const sendBrevoEmail = async (email, type, otp) => {
-  console.log(email,type,otp);
-  
   try {
     const subject =
       type === 'verification'
@@ -19,6 +20,7 @@ const sendBrevoEmail = async (email, type, otp) => {
       name: 'HookStep',
       email: 'gazifayaz.wani@Genixbit.com',
     };
+
     sendSmtpEmail.to = [{ email, name: 'Recipient Name' }];
     sendSmtpEmail.subject = subject;
     sendSmtpEmail.htmlContent = message;
