@@ -15,7 +15,7 @@ const useragent = require('express-useragent');
 // const FB = require('fb');
 
 const { MailerSend, EmailParams, Sender, Recipient } = require("mailersend");
-const {sendBrevoEmail} = require('../utils/sendMail')
+const {sendBrevoEmail} = require('../utils/sendmail')
 
 const mailerSend = new MailerSend({
     apiKey: process.env.MAILERSEND_API_KEY,
