@@ -27,15 +27,10 @@ const client = new twilio(accountSid, authToken);
 
 const transporter = nodemailer.createTransport({
     service:'gmail',
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
-    secure: true, 
     auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: process.env.MAIL_USERNAME,
+        pass: process.env.MAIL_PASSWORD,
     },
-    debug: true,
-    logger: true 
 });
 
 
@@ -66,12 +61,27 @@ const newSignup = asyncHandler(async (req, res) => {
             { upsert: true, new: true }
         );
 
-        const { success, data } = await sendBrevoEmail(
-            email,
-           'verification',
-            otp
-          );          
+        const htmlContent = `
+        <p>Your OTP for verification is: <strong>${7178}</strong></p>
+        <p>Thank you for using HookStep.</p>
+     `;
 
+        const mailOptions = {
+          from: process.env.MAIL_FROM_ADDRESS,
+          to: email,
+          subject: 'Welcome to HookStep',
+          text: 'Thank you for joining us!',
+          html: htmlContent,
+        };
+
+        transporter.sendMail(mailOptions, async (error, info) => {
+          if (error) {
+            console.log(error);
+            throw new Error('mail failed');
+          }
+          console.log(info);
+        });
+    
         res.status(200).json({
             success: true,
             message: 'OTP sent successfully to your email',
@@ -245,14 +255,6 @@ const sendOTPEmail = asyncHandler(async (req, res) => {
         return res.status(400).json({ message: "Email is required" });
     }
 
-    if (email === "testing@gmail.com") {
-        return res.json({
-            otp: "1234",
-            message: "OTP sent successfully",
-        });
-    }
-
-
     const user = await User.findOne({ email });
     if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -267,7 +269,27 @@ const sendOTPEmail = asyncHandler(async (req, res) => {
             { upsert: true, new: true }
         );
 
-        const {success , data} = await sendBrevoEmail(email , 'resetPassword' , otp)
+        const htmlContent = `
+        <p>Your OTP for verification is: <strong>${OTP}</strong></p>
+        <p>Thank you for using HookStep.</p>
+     `;
+    
+     const mailOptions = {
+         from: process.env.MAIL_FROM_ADDRESS,
+         to: email,
+         subject: "Welcome to HookStep",
+         text: "Thank you for joining us!",
+         html: htmlContent,
+     };
+    
+       transporter.sendMail(mailOptions, async (error, info) => {
+            if(error){
+                console.log(error); 
+                throw new Error('mail failed')
+            }
+            console.log(info);  
+        })
+    
 
         res.status(200).json({
             success: true,
@@ -355,13 +377,7 @@ const sendOTPSignup = asyncHandler(async (req, res) => {
         };
 
        const emailResponse = transporter.sendMail(mailOptions, async (error, info) => {
-            if (error) await axios.post(`https://headstart.genixbit.com/api/sendEmail`,{
-                email,
-                message:`Welcome to HookStep!
-                Please verify your email using this OTP: ${otp}
-                This OTP will expire in 5 minutes.
-                Thank you for choosing HookStep!`
-            })
+            if (error) throw new Error(error)
             console.log('Email send : ' + info.response);
           });
 
@@ -1397,38 +1413,8 @@ const getAllVideos = asyncHandler(async (req, res) => {
     }
 });
 
-// Test Bro Mail
-const sendBrevoEmailTest = asyncHandler(async (req, res) => {
-  try {
-    const HTMLcontent = `
-    <h1>
-      Mail send
-    </h1>
-    <br />
-    <p>
-      Hello , this is mail test
-    </p>
-    `;
-    const {success , data} = await sendBrevoEmail(
-      'gaziwani123@gmail.com',
-      'Mail Test',
-      HTMLcontent
-    );
-    res.status(201).json({
-      success,
-      message: 'Email sent successfully!',
-      messageId: data.messageId,
-    });
-  } catch (error) {
-    console.error('Error sending email:', error);
-    res
-      .status(500)
-      .json({ message: 'Failed to send email', error: error.message });
-  }
-});
-
 
 module.exports = { registerUser, authUser, allUsersBySearch, getUserDetails, deleteUserDetails, addVideoLink, updateUserById, getVideoLinkDetails, sendEmail, verifyOtpEmail,
     sendOTPSignup, verifyOTPSignup, sendOTPLogin, verifyOTPLogin, processVideoLink, newSignup, newSignupVerify, newLogin, sendOTPEmail, resetPassword, getAllCountries,getStatesByCountry, 
-    getCitiesByState, getDesignationList, getAllVideos , sendBrevoEmailTest
+    getCitiesByState, getDesignationList, getAllVideos 
  };
