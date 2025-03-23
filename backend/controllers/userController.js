@@ -115,7 +115,7 @@ const newSignup = asyncHandler(async (req, res) => {
     }
 
     try {
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
         await OTP.findOneAndUpdate(
             { email },
@@ -165,7 +165,7 @@ const newSignup = asyncHandler(async (req, res) => {
 
         const response = await axios(options);
         
-        console.log('Email sent successfully:', response.data);
+        // console.log('Email sent successfully:', response.data);
         
         res.status(200).json({
             success: true,
@@ -343,7 +343,7 @@ const sendOTPEmail = asyncHandler(async (req, res) => {
     }
 
     try {
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
         await OTP.findOneAndUpdate(
             { email },
