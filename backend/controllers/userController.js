@@ -36,6 +36,68 @@ const transporter = nodemailer.createTransport({
 
 // var emailUpdate;
 
+// const newSignup = asyncHandler(async (req, res) => {
+//     const { email, mobileCode, mobile } = req.body;
+//     if (!email || !mobileCode || !mobile) {
+//         return res.status(400).json({ message: "Missing required fields" });
+//     }
+
+//     const userExistsWithMobile = await User.findOne({ mobile });
+//     if (userExistsWithMobile) {
+//         return res.status(400).json({ message: "Mobile number already registered" });
+//     }
+
+//     const userExists = await User.findOne({ email });
+//     if (userExists) {
+//         return res.status(400).json({ message: "Email already registered" });
+//     }
+
+//     try {
+//         const otp = Math.floor(1000 + Math.random() * 9000).toString();
+
+//         await OTP.findOneAndUpdate(
+//             { email },
+//             { email, otp },
+//             { upsert: true, new: true }
+//         );
+
+//         const htmlContent = `
+//         <p>Your OTP for verification is: <strong>${7178}</strong></p>
+//         <p>Thank you for using HookStep.</p>
+//      `;
+
+//         const mailOptions = {
+//           from: process.env.MAIL_FROM_ADDRESS,
+//           to: email,
+//           subject: 'Welcome to HookStep',
+//           text: 'Thank you for joining us!',
+//           html: htmlContent,
+//         };
+
+//         transporter.sendMail(mailOptions, async (error, info) => {
+//           if (error) {
+//             console.log(error);
+//             throw new Error('mail failed');
+//           }
+//           console.log(info);
+//         });
+    
+//         res.status(200).json({
+//             success: true,
+//             message: 'OTP sent successfully to your email',
+            
+//         });
+
+//     } catch (error) {
+//         await OTP.deleteOne({ email });
+//         console.error( error);
+//         res.status(500).json({
+//             success: false,
+//             message: 'Failed to send OTP',
+//             error: error.toString()
+//         });
+//     }
+// });
 const newSignup = asyncHandler(async (req, res) => {
     const { email, mobileCode, mobile } = req.body;
     if (!email || !mobileCode || !mobile) {
@@ -53,7 +115,7 @@ const newSignup = asyncHandler(async (req, res) => {
     }
 
     try {
-        const otp = Math.floor(1000 + Math.random() * 9000).toString();
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
         await OTP.findOneAndUpdate(
             { email },
@@ -61,36 +123,58 @@ const newSignup = asyncHandler(async (req, res) => {
             { upsert: true, new: true }
         );
 
-        const htmlContent = `
-        <p>Your OTP for verification is: <strong>${7178}</strong></p>
-        <p>Thank you for using HookStep.</p>
-     `;
+        const zeptoApiKey = "Zoho-enczapikey PHtE6r1YQuvi2WZ7oEMAsP+7RMagZI9/rO1lJQkV5odEWP4ASU0A/4h+xDK0+houVfNDFqTKnY5pubvJs+mMcWrtMTodWmqyqK3sx/VYSPOZsbq6x00esVQadU3VVYfmct5s3S3UstzaNA==";
+        const templateId = "2518b.45dd43eafd6631e.k1.164810c0-0674-11f0-86c9-525400b0b0f3.195b999abcc";
+        const fromEmail = "donotreply@hookstep.net";
+        const bounceEmail = "donotreply@noreply.hookstep.net";
+        
+        const recipientEmail = email;
+        const recipientName = "User"; 
+        const teamName = "Support Team";
+        const productName = "HookStep";
 
-        const mailOptions = {
-          from: process.env.MAIL_FROM_ADDRESS,
-          to: email,
-          subject: 'Welcome to HookStep',
-          text: 'Thank you for joining us!',
-          html: htmlContent,
+        const options = {
+            method: 'POST',
+            url: 'https://api.zeptomail.in/v1.1/email/template',
+            headers: {
+                'accept': 'application/json',
+                'authorization': zeptoApiKey,
+                'cache-control': 'no-cache',
+                'content-type': 'application/json',
+            },
+            data: {
+                template_key: templateId,
+                bounce_address: bounceEmail,
+                from: { address: fromEmail },
+                to: [
+                    {
+                        email_address: { 
+                            address: recipientEmail, 
+                            name: recipientName 
+                        }
+                    }
+                ],
+                merge_info: {
+                    OTP: otp,
+                    name: recipientName,
+                    team: teamName,
+                    product_name: productName
+                }
+            }
         };
 
-        transporter.sendMail(mailOptions, async (error, info) => {
-          if (error) {
-            console.log(error);
-            throw new Error('mail failed');
-          }
-          console.log(info);
-        });
-    
+        const response = await axios(options);
+        
+        console.log('Email sent successfully:', response.data);
+        
         res.status(200).json({
             success: true,
             message: 'OTP sent successfully to your email',
-            
         });
 
     } catch (error) {
         await OTP.deleteOne({ email });
-        console.error( error);
+        console.error('Error sending OTP:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to send OTP',
@@ -98,7 +182,6 @@ const newSignup = asyncHandler(async (req, res) => {
         });
     }
 });
-
 
 
 const newSignupVerify = asyncHandler(async (req, res) => {
@@ -250,7 +333,6 @@ const sendOTPEmail = asyncHandler(async (req, res) => {
 
     console.log(email);
     
-    
     if (!email) {
         return res.status(400).json({ message: "Email is required" });
     }
@@ -261,7 +343,7 @@ const sendOTPEmail = asyncHandler(async (req, res) => {
     }
 
     try {
-        const otp = Math.floor(1000 + Math.random() * 9000).toString();
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
         await OTP.findOneAndUpdate(
             { email },
@@ -269,27 +351,49 @@ const sendOTPEmail = asyncHandler(async (req, res) => {
             { upsert: true, new: true }
         );
 
-        const htmlContent = `
-        <p>Your OTP for verification is: <strong>${OTP}</strong></p>
-        <p>Thank you for using HookStep.</p>
-     `;
-    
-     const mailOptions = {
-         from: process.env.MAIL_FROM_ADDRESS,
-         to: email,
-         subject: "Welcome to HookStep",
-         text: "Thank you for joining us!",
-         html: htmlContent,
-     };
-    
-       transporter.sendMail(mailOptions, async (error, info) => {
-            if(error){
-                console.log(error); 
-                throw new Error('mail failed')
+        const zeptoApiKey = "Zoho-enczapikey PHtE6r1YQuvi2WZ7oEMAsP+7RMagZI9/rO1lJQkV5odEWP4ASU0A/4h+xDK0+houVfNDFqTKnY5pubvJs+mMcWrtMTodWmqyqK3sx/VYSPOZsbq6x00esVQadU3VVYfmct5s3S3UstzaNA==";
+        const templateId = "2518b.45dd43eafd6631e.k1.164810c0-0674-11f0-86c9-525400b0b0f3.195b999abcc";
+        const fromEmail = "donotreply@hookstep.net";
+        const bounceEmail = "donotreply@noreply.hookstep.net";
+        
+        const recipientEmail = email;
+        const recipientName = user.name || "User"; 
+        const teamName = "Support Team";
+        const productName = "HookStep";
+
+        const options = {
+            method: 'POST',
+            url: 'https://api.zeptomail.in/v1.1/email/template',
+            headers: {
+                'accept': 'application/json',
+                'authorization': zeptoApiKey,
+                'cache-control': 'no-cache',
+                'content-type': 'application/json',
+            },
+            data: {
+                template_key: templateId,
+                bounce_address: bounceEmail,
+                from: { address: fromEmail },
+                to: [
+                    {
+                        email_address: { 
+                            address: recipientEmail, 
+                            name: recipientName 
+                        }
+                    }
+                ],
+                merge_info: {
+                    OTP: otp,
+                    name: recipientName,
+                    team: teamName,
+                    product_name: productName
+                }
             }
-            console.log(info);  
-        })
-    
+        };
+
+        const response = await axios(options);
+        
+        console.log('Email sent successfully:', response.data);
 
         res.status(200).json({
             success: true,
@@ -298,7 +402,7 @@ const sendOTPEmail = asyncHandler(async (req, res) => {
 
     } catch (error) {
         await OTP.deleteOne({ email });
-        console.error("Nodemailer Error:", error);
+        console.error("Email Error:", error);
         res.status(500).json({
             success: false,
             message: "Failed to send OTP",
